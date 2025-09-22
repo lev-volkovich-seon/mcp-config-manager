@@ -4,7 +4,8 @@ Simple CLI and web UI tool to manage Model Context Protocol (MCP) configurations
 
 ## Features
 
-- **Multi-client support**: Manage configs for Claude, VS Code, Cursor, Windsurf, Gemini, and more
+- **Auto-detection**: Automatically discovers supported clients with existing MCP configuration files.
+- **Multi-client support**: Manage configs for a growing list of clients, including Claude, VS Code, Cursor, Windsurf, Gemini, and more. The tool can detect any client that follows the MCP specification.
 - **Simple CLI**: Command-line interface for quick operations
 - **Web UI**: Clean web interface with List and Kanban views
 - **Kanban Board**: Drag-and-drop servers between clients
@@ -82,6 +83,7 @@ mcp-manager web --port 3456
 Then open http://localhost:3456 in your browser.
 
 The web UI provides:
+- **Client auto-discovery**: Automatically detects clients with existing configurations on startup, with a refresh button to scan for more.
 - **List View**: Traditional interface with detailed server management
   - Multi-select checkboxes for bulk delete operations
   - Remove from all clients button for each server
@@ -101,13 +103,20 @@ The web UI provides:
 
 ## Supported Clients
 
+This tool supports auto-detection of any client that follows the Model Context Protocol specification. The following is a non-exhaustive list of clients that have been tested and are known to work:
+
+- **Amazon Q Developer**: `~/.aws/amazonq/mcp.json`
 - **Claude Desktop**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Claude Code**: `.mcp.json` in project root
-- **VS Code**: `.vscode/mcp.json`
-- **Cursor**: `.cursor/mcp.json`
-- **Windsurf**: `~/.codeium/windsurf/mcp_config.json`
+- **Cline**: `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
+- **Cursor**: `.cursor/mcp.json` (project-specific) or `~/.cursor/mcp.json` (global)
+- **Factory Bridge**: `~/Library/Application Support/Factory Bridge/mcp.json`
 - **Gemini**: `~/.gemini/settings.json`
-- **Amazon Q**: `~/.aws/amazonq/mcp.json`
+- **Roo Code**: `~/Library/Application Support/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/cline_mcp_settings.json`
+- **VS Code**: `.vscode/mcp.json`
+- **Windsurf**: `~/.codeium/windsurf/mcp_config.json` or `~/AppData/Roaming/WindSurf/mcp_settings.json` (Windows)
+
+*Note: Paths may vary based on your operating system. The tool will attempt to find the correct path automatically.*
 
 ## Configuration Format
 
