@@ -38,6 +38,15 @@ export const CLIENTS = {
     },
     format: 'mcpServers'
   },
+  'cursor-global': {
+    name: 'Cursor (Global)',
+    configPaths: {
+      darwin: path.join(os.homedir(), '.cursor/mcp.json'),
+      win32: path.join(os.homedir(), '.cursor/mcp.json'),
+      linux: path.join(os.homedir(), '.cursor/mcp.json')
+    },
+    format: 'mcpServers'
+  },
   gemini: {
     name: 'Gemini',
     configPaths: {
@@ -51,7 +60,7 @@ export const CLIENTS = {
     name: 'Windsurf',
     configPaths: {
       darwin: path.join(os.homedir(), '.codeium/windsurf/mcp_config.json'),
-      win32: path.join(os.homedir(), '.codeium/windsurf/mcp_config.json'),
+      win32: path.join(process.env.APPDATA || '', 'WindSurf/mcp_settings.json'),
       linux: path.join(os.homedir(), '.codeium/windsurf/mcp_config.json')
     },
     format: 'mcpServers'
@@ -62,6 +71,42 @@ export const CLIENTS = {
       darwin: path.join(os.homedir(), '.aws/amazonq/mcp.json'),
       win32: path.join(os.homedir(), '.aws/amazonq/mcp.json'),
       linux: path.join(os.homedir(), '.aws/amazonq/mcp.json')
+    },
+    format: 'mcpServers'
+  },
+  '5ire': {
+    name: '5ire',
+    configPaths: {
+      darwin: path.join(os.homedir(), 'Library/Application Support/5ire/mcp.json'),
+      win32: path.join(process.env.APPDATA || '', '5ire/mcp.json'),
+      linux: path.join(os.homedir(), '.config/5ire/mcp.json')
+    },
+    format: 'mcpServers'
+  },
+  'factory-bridge': {
+    name: 'Factory Bridge',
+    configPaths: {
+      darwin: path.join(os.homedir(), 'Library/Application Support/Factory Bridge/mcp.json'),
+      win32: path.join(process.env.APPDATA || '', 'Factory Bridge/mcp.json'),
+      linux: path.join(os.homedir(), '.config/Factory Bridge/mcp.json')
+    },
+    format: 'mcpServers'
+  },
+  cline: {
+    name: 'Cline',
+    configPaths: {
+      darwin: path.join(os.homedir(), 'Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json'),
+      win32: path.join(process.env.APPDATA || '', 'Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json'),
+      linux: path.join(os.homedir(), '.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json')
+    },
+    format: 'mcpServers'
+  },
+  'roo-code': {
+    name: 'Roo Code',
+    configPaths: {
+      darwin: path.join(os.homedir(), 'Library/Application Support/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/cline_mcp_settings.json'),
+      win32: path.join(process.env.APPDATA || '', 'Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/cline_mcp_settings.json'),
+      linux: path.join(os.homedir(), '.config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/cline_mcp_settings.json')
     },
     format: 'mcpServers'
   }
