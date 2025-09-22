@@ -19,11 +19,11 @@ program
       console.log('\nSupported MCP Clients:\n');
 
       for (const client of clients) {
-        const status = client.exists ? `✓ ${client.serverCount} server(s)` : '✗ No config';
+        const status = client.found ? `✓ ${client.serverCount || 0} server(s)` : '✗ No config';
         console.log(`  ${client.name.padEnd(20)} ${status.padEnd(20)} ${client.configPath}`);
       }
     } catch (error) {
-      console.error('Error:', error.message);
+      console.error('Error:', error);
       process.exit(1);
     }
   });

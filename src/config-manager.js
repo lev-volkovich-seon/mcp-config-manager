@@ -1,4 +1,4 @@
-import fs from 'fs/promises';
+import * as fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 
@@ -13,16 +13,16 @@ export class MCPConfigManager {
   async detectClients() {
     const detectedClients = {};
     for (const [id, client] of Object.entries(CLIENTS)) {
-      const configPath = this.getConfigPath(id);
+      const configPath = client.configPaths[os.platform()];
+      const absoluteConfigPath = path.isAbsolute(configPath) ? configPath : path.join(process.cwd(), configPath);
       try {
-        await fs.access(configPath);
+        await fs.access(absoluteConfigPath, fs.constants.F_OK);
         detectedClients[id] = client;
       } catch (error) {
-        // Ignore clients that are not found
+        // File does not exist or is not accessible, skip this client
       }
     }
     this.availableClients = detectedClients;
-    return this.availableClients;
   }
 
   async getAvailableClients() {
@@ -48,6 +48,7 @@ export class MCPConfigManager {
           exists: true
         });
       } catch (error) {
+        console.error(`Error processing client ${key}:`, error.message);
         clientsWithConfigs.push({
           id: key,
           name: client.name,
@@ -130,33 +131,7 @@ export class MCPConfigManager {
     await fs.writeFile(configPath, JSON.stringify(finalConfig, null, 2));
   }
 
-  async listClients() {
-    const clientsWithConfigs = [];
 
-    for (const [key, client] of Object.entries(CLIENTS)) {
-      try {
-        const config = await this.readConfig(key);
-        const serverCount = Object.keys(config.servers).length;
-        clientsWithConfigs.push({
-          id: key,
-          name: client.name,
-          configPath: this.getConfigPath(key),
-          serverCount,
-          exists: true
-        });
-      } catch (error) {
-        clientsWithConfigs.push({
-          id: key,
-          name: client.name,
-          configPath: this.getConfigPath(key),
-          serverCount: 0,
-          exists: false
-        });
-      }
-    }
-
-    return clientsWithConfigs;
-  }
 
   async addServer(client, serverName, serverConfig) {
     const config = await this.readConfig(client);
@@ -253,11 +228,11 @@ export class MCPConfigManager {
     }
   }
 
-  getSupportedClients() {
-    return Object.entries(CLIENTS).map(([id, client]) => ({
+  async getSupportedClients() {
+    const availableClients = await this.getAvailableClients();
+    return Object.entries(availableClients).map(([id, client]) => ({
       id,
       name: client.name,
-      configPath: this.getConfigPath(id)
     }));
   }
 

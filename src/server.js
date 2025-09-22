@@ -121,6 +121,16 @@ export function startServer(port = 3456) {
   app.listen(port, () => {
     console.log(`MCP Config Manager server running on http://localhost:${port}`);
   });
+
+  process.on('uncaughtException', (err) => {
+    console.error('Unhandled Exception:', err);
+    process.exit(1);
+  });
+
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    process.exit(1);
+  });
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
