@@ -17,6 +17,15 @@ export function startServer(port = 3456) {
   app.use(express.static(path.join(__dirname, '..', 'public')));
 
   // API Routes
+  app.get('/api/clients/detect', async (req, res) => {
+    try {
+      const clients = await manager.detectClients();
+      res.json(Object.keys(clients));
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.get('/api/clients', async (req, res) => {
     try {
       const clients = await manager.listClients();

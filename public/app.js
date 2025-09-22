@@ -6,6 +6,16 @@ let currentView = 'list';
 let draggedServer = null;
 let draggedFromClient = null;
 
+async function refreshClients() {
+    try {
+        await fetch(`${API_URL}/clients/detect`);
+        await loadClients();
+    } catch (error) {
+        console.error('Failed to refresh clients:', error);
+        alert('Failed to refresh clients. Make sure the server is running.');
+    }
+}
+
 async function loadClients() {
     try {
         const response = await fetch(`${API_URL}/clients`);
@@ -791,7 +801,7 @@ function switchView(view) {
 // Event listeners
 document.getElementById('listViewBtn').onclick = () => switchView('list');
 document.getElementById('kanbanViewBtn').onclick = () => switchView('kanban');
-document.getElementById('refreshBtn').onclick = loadClients;
+document.getElementById('refreshBtn').onclick = refreshClients;
 document.getElementById('addServerBtn').onclick = () => showServerModal();
 document.getElementById('exportConfigBtn').onclick = exportConfig;
 document.getElementById('importConfigBtn').onclick = showImportModal;

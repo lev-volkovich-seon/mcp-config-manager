@@ -2,75 +2,63 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 
-const CLIENTS = {
-  claude: {
-    name: 'Claude Desktop',
-    configPaths: {
-      darwin: path.join(os.homedir(), 'Library/Application Support/Claude/claude_desktop_config.json'),
-      win32: path.join(process.env.APPDATA || '', 'Claude/claude_desktop_config.json'),
-      linux: path.join(os.homedir(), '.config/Claude/claude_desktop_config.json')
-    },
-    format: 'mcpServers'
-  },
-  'claude-code': {
-    name: 'Claude Code',
-    configPaths: {
-      darwin: '.mcp.json',
-      win32: '.mcp.json',
-      linux: '.mcp.json'
-    },
-    format: 'mcpServers'
-  },
-  vscode: {
-    name: 'VS Code',
-    configPaths: {
-      darwin: '.vscode/mcp.json',
-      win32: '.vscode/mcp.json',
-      linux: '.vscode/mcp.json'
-    },
-    format: 'mcp.servers'
-  },
-  cursor: {
-    name: 'Cursor',
-    configPaths: {
-      darwin: '.cursor/mcp.json',
-      win32: '.cursor/mcp.json',
-      linux: '.cursor/mcp.json'
-    },
-    format: 'mcpServers'
-  },
-  gemini: {
-    name: 'Gemini',
-    configPaths: {
-      darwin: path.join(os.homedir(), '.gemini/settings.json'),
-      win32: path.join(os.homedir(), '.gemini/settings.json'),
-      linux: path.join(os.homedir(), '.gemini/settings.json')
-    },
-    format: 'mcpServers'
-  },
-  windsurf: {
-    name: 'Windsurf',
-    configPaths: {
-      darwin: path.join(os.homedir(), '.codeium/windsurf/mcp_config.json'),
-      win32: path.join(os.homedir(), '.codeium/windsurf/mcp_config.json'),
-      linux: path.join(os.homedir(), '.codeium/windsurf/mcp_config.json')
-    },
-    format: 'mcpServers'
-  },
-  amazonq: {
-    name: 'Amazon Q Developer',
-    configPaths: {
-      darwin: path.join(os.homedir(), '.aws/amazonq/mcp.json'),
-      win32: path.join(os.homedir(), '.aws/amazonq/mcp.json'),
-      linux: path.join(os.homedir(), '.aws/amazonq/mcp.json')
-    },
-    format: 'mcpServers'
-  }
-};
+import { CLIENTS } from './clients.js';
 
 export class MCPConfigManager {
   constructor() {
     this.platform = os.platform();
+    this.availableClients = {};
+  }
+
+  async detectClients() {
+    const detectedClients = {};
+    for (const [id, client] of Object.entries(CLIENTS)) {
+      const configPath = this.getConfigPath(id);
+      try {
+        await fs.access(configPath);
+        detectedClients[id] = client;
+      } catch (error) {
+        // Ignore clients that are not found
+      }
+    }
+    this.availableClients = detectedClients;
+    return this.availableClients;
+  }
+
+  async getAvailableClients() {
+    if (Object.keys(this.availableClients).length === 0) {
+      await this.detectClients();
+    }
+    return this.availableClients;
+  }
+
+  async listClients() {
+    const clientsWithConfigs = [];
+    const availableClients = await this.getAvailableClients();
+
+    for (const [key, client] of Object.entries(availableClients)) {
+      try {
+        const config = await this.readConfig(key);
+        const serverCount = Object.keys(config.servers).length;
+        clientsWithConfigs.push({
+          id: key,
+          name: client.name,
+          configPath: this.getConfigPath(key),
+          serverCount,
+          exists: true
+        });
+      } catch (error) {
+        clientsWithConfigs.push({
+          id: key,
+          name: client.name,
+          configPath: this.getConfigPath(key),
+          serverCount: 0,
+          exists: false
+        });
+      }
+    }
+
+    return clientsWithConfigs;
   }
 
   getConfigPath(client) {
