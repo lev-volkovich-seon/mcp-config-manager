@@ -4,15 +4,34 @@
   "description": "Simple CLI and web UI to manage MCP configs across multiple AI clients",
   "main": "src/cli.js",
   "bin": {
-    "mcp-manager": "./src/cli.js"
+    "mcp-manager": "src/cli.js"
   },
   "scripts": {
     "start": "node src/cli.js",
     "web": "node src/server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "claude",
+    "vscode",
+    "cursor",
+    "gemini",
+    "windsurf",
+    "amazonq"
+  ],
+  "author": "Lev Volkovich <lev.volkovich@seon.io>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lev-volkovich-seon/mcp-config-manager.git"
+  },
+  "files": [
+    "src",
+    "public",
+    "README.md"
+  ],
   "type": "module",
   "dependencies": {
     "commander": "^14.0.1",
