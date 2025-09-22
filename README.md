@@ -1,5 +1,7 @@
 # MCP Config Manager
 
+[![npm version](https://badge.fury.io/js/mcp-config-manager.svg)](https://badge.fury.io/js/mcp-config-manager)
+
 Simple CLI and web UI tool to manage Model Context Protocol (MCP) configurations across multiple AI clients.
 
 ## Features
@@ -17,6 +19,13 @@ Simple CLI and web UI tool to manage Model Context Protocol (MCP) configurations
 - **Environment variables**: Easily manage API keys and settings
 
 ## Installation
+
+```bash
+# Install globally from npm
+npm install -g mcp-config-manager
+```
+
+Alternatively, you can clone the project and run it locally:
 
 ```bash
 # Clone or download the project
