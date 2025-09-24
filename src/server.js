@@ -35,6 +35,15 @@ export function startServer(port = 3456) {
     }
   });
 
+  app.get('/api/servers', async (req, res) => {
+    try {
+      const servers = await manager.getServersInClients();
+      res.json(servers);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.get('/api/clients/:client', async (req, res) => {
     try {
       const config = await manager.readConfig(req.params.client);
@@ -48,6 +57,19 @@ export function startServer(port = 3456) {
     try {
       await manager.addServer(req.params.client, req.params.server, req.body);
       res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/servers/add-to-clients', async (req, res) => {
+    try {
+      const { serverName, serverConfig, clientIds } = req.body;
+      if (!serverName || !serverConfig || !clientIds || !Array.isArray(clientIds)) {
+        return res.status(400).json({ error: 'Missing serverName, serverConfig, or clientIds' });
+      }
+      const results = await manager.addServerToMultipleClients(serverName, serverConfig, clientIds);
+      res.json({ success: true, results });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -68,6 +90,43 @@ export function startServer(port = 3456) {
       config.servers[req.params.server] = req.body;
       await manager.writeConfig(req.params.client, config);
       res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.put('/api/servers/:serverName/env', async (req, res) => {
+    try {
+      const { envKey, envValue, clientIds } = req.body;
+      const serverName = req.params.serverName;
+
+      if (!envKey) {
+        return res.status(400).json({ error: 'Missing envKey' });
+      }
+
+      let targetServers = null;
+      if (clientIds && Array.isArray(clientIds) && clientIds.length > 0) {
+        targetServers = clientIds.map(clientId => ({ client: clientId, server: serverName }));
+      }
+
+      const results = await manager.updateEnvironmentVariableAcrossConfigs(envKey, envValue, targetServers);
+      res.json({ success: true, results });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.put('/api/servers/:oldName/rename', async (req, res) => {
+    try {
+      const { newName } = req.body;
+      const oldName = req.params.oldName;
+
+      if (!newName) {
+        return res.status(400).json({ error: 'Missing newName' });
+      }
+
+      const results = await manager.renameServerAcrossClients(oldName, newName);
+      res.json({ success: true, results });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }

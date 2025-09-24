@@ -19,7 +19,7 @@ program
       console.log('\nSupported MCP Clients:\n');
 
       for (const client of clients) {
-        const status = client.found ? `✓ ${client.serverCount || 0} server(s)` : '✗ No config';
+        const status = client.exists ? `✓ ${client.serverCount || 0} server(s)` : '✗ No config';
         console.log(`  ${client.name.padEnd(20)} ${status.padEnd(20)} ${client.configPath}`);
       }
     } catch (error) {
@@ -301,7 +301,7 @@ program
   });
 
 program
-  .command('env-update-all <key> <value>')
+  .command('env-update-all <key> [value]')
   .description('Update an environment variable across all configs where it exists')
   .option('-c, --clients <clients...>', 'Only update in specific clients')
   .option('-s, --servers <servers...>', 'Only update in specific servers')

@@ -14,6 +14,7 @@
             <div class="view-switcher">
                 <button id="listViewBtn" class="view-btn active">List View</button>
                 <button id="kanbanViewBtn" class="view-btn">Kanban View</button>
+                <button id="serverViewBtn" class="view-btn">Server View</button>
             </div>
         </header>
 
@@ -21,6 +22,15 @@
             <div class="main-grid">
                 <aside class="sidebar">
                     <h2>Clients</h2>
+                    <div class="sort-options">
+                        <label for="clientSort">Sort by:</label>
+                        <select id="clientSort">
+                            <option value="name-asc">Name (A-Z)</option>
+                            <option value="name-desc">Name (Z-A)</option>
+                            <option value="servers-asc">Servers (Low to High)</option>
+                            <option value="servers-desc">Servers (High to Low)</option>
+                        </select>
+                    </div>
                     <div id="clientList" class="client-list"></div>
                     <button id="refreshBtn" class="btn btn-secondary">Refresh</button>
                 </aside>
@@ -51,7 +61,21 @@
         </div>
 
         <div id="kanbanViewContainer" style="display: none;">
+            <div class="sort-options">
+                <label for="kanbanSort">Sort by:</label>
+                <select id="kanbanSort">
+                    <option value="name-asc">Name (A-Z)</option>
+                    <option value="name-desc">Name (Z-A)</option>
+                    <option value="servers-asc">Servers (Low to High)</option>
+                    <option value="servers-desc">Servers (High to Low)</option>
+                </select>
+            </div>
             <div class="kanban-board" id="kanbanBoard"></div>
+        </div>
+
+        <div id="serverViewContainer" style="display: none;">
+            <h2>All Servers</h2>
+            <div class="server-list-all" id="allServersList"></div>
         </div>
     </div>
 
@@ -68,30 +92,34 @@
                 <div id="formTab" class="tab-content active">
                     <div class="form-group">
                         <label for="serverName">Server Name</label>
-                        <input type="text" id="serverName" required>
+                        <input type="text" id="serverName" name="serverName" required>
                     </div>
+
+
 
                     <div class="form-group">
                         <label for="serverCommand">Command</label>
-                        <input type="text" id="serverCommand" placeholder="e.g., npx">
+                        <input type="text" id="serverCommand" name="serverCommand" placeholder="e.g., npx">
                     </div>
 
                     <div class="form-group">
                         <label for="serverArgs">Arguments (one per line)</label>
-                        <textarea id="serverArgs" rows="3" placeholder="e.g., -y&#10;@example/mcp-server"></textarea>
+                        <textarea id="serverArgs" name="serverArgs" rows="3" placeholder="e.g., -y&#10;@example/mcp-server"></textarea>
                     </div>
 
                     <div class="form-group">
                         <label>Environment Variables</label>
                         <div id="envVars"></div>
-                        <button type="button" id="addEnvVar" class="btn btn-small">Add Variable</button>
+                        <button type="button" id="addEnvVar" class="icon-btn no-bg add-env-var">+</button>
                     </div>
+
+
                 </div>
 
                 <div id="jsonTab" class="tab-content" style="display: none;">
                     <div class="form-group">
                         <label for="jsonEditor">Server Configuration (JSON)</label>
-                        <textarea id="jsonEditor" rows="15" placeholder='{"command": "npx", "args": ["-y", "@example/server"]}'></textarea>
+                        <textarea id="jsonEditor" name="jsonEditor" rows="15" placeholder='{"command": "npx", "args": ["-y", "@example/server"]}'></textarea>
                     </div>
                 </div>
 
@@ -148,6 +176,125 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- Edit Server Env Modal -->
+    <div id="editServerEnvModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 id="editServerEnvTitle">Edit Environment Variables for Server</h3>
+            <form id="editServerEnvForm">
+                <div class="form-group">
+                    <label>Server Name:</label>
+                    <span id="editServerEnvName"></span>
+                </div>
+                <div class="form-group">
+                    <label>Environment Variables</label>
+                    <div id="editEnvVars"></div>
+                    <button type="button" id="addEditEnvVar" class="btn btn-small">Add Variable</button>
+                </div>
+                <div class="form-group">
+                    <label>Apply to Clients:</label>
+                    <div id="editEnvClients" class="checkbox-list"></div>
+                    <button type="button" id="selectAllEditEnvClients" class="btn btn-small">Select All</button>
+                    <button type="button" id="selectNoneEditEnvClients" class="btn btn-small">Select None</button>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" id="cancelEditServerEnv" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Server to Clients Modal -->
+    <div id="addServerToClientsModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 id="addServerToClientsTitle">Add Server to Clients</h3>
+            <form id="addServerToClientsForm">
+                <div class="form-group">
+                    <label>Server Name:</label>
+                    <span id="addServerToClientsName"></span>
+                </div>
+                <div class="form-group">
+                    <label>Server Configuration (JSON)</label>
+                    <textarea id="addServerToClientsConfig" rows="10" readonly></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Select Clients:</label>
+                    <div id="addServerToClientsList" class="checkbox-list"></div>
+                    <button type="button" id="selectAllAddServerClients" class="btn btn-small">Select All</button>
+                    <button type="button" id="selectNoneAddServerClients" class="btn btn-small">Select None</button>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Add Server</button>
+                    <button type="button" id="cancelAddServerToClients" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Copy Env Vars Modal -->
+    <div id="copyEnvVarsModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 id="copyEnvVarsTitle">Copy Environment Variables</h3>
+            <form id="copyEnvVarsForm">
+                <div class="form-group">
+                    <label>Source Server:</label>
+                    <span id="copyEnvVarsSourceServer"></span>
+                </div>
+                <div class="form-group">
+                    <label>Source Client:</label>
+                    <span id="copyEnvVarsSourceClient"></span>
+                </div>
+                <div class="form-group">
+                    <label>Environment Variable:</label>
+                    <select id="copyEnvVarSelect"></select>
+                </div>
+                <div class="form-group">
+                    <label>Target Clients:</label>
+                    <div id="copyEnvVarsTargetClients" class="checkbox-list"></div>
+                    <button type="button" id="selectAllCopyEnvVarsClients" class="btn btn-small">Select All</button>
+                    <button type="button" id="selectNoneCopyEnvVarsClients" class="btn btn-small">Select None</button>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Copy Variables</button>
+                    <button type="button" id="cancelCopyEnvVars" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Copy Single Env Var Modal -->
+    <div id="copySingleEnvVarModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 id="copySingleEnvVarTitle">Copy Environment Variable</h3>
+            <form id="copySingleEnvVarForm">
+                <div class="form-group">
+                    <label>Variable Name:</label>
+                    <span id="copySingleEnvVarKey"></span>
+                </div>
+                <div class="form-group">
+                    <label>Variable Value:</label>
+                    <span id="copySingleEnvVarValue"></span>
+                </div>
+                <div class="form-group">
+                    <label>Target Clients:</label>
+                    <div id="copySingleEnvVarTargetClients" class="checkbox-list"></div>
+                    <button type="button" id="selectAllCopySingleEnvVarClients" class="btn btn-small">Select All</button>
+                    <button type="button" id="selectNoneCopySingleEnvVarClients" class="btn btn-small">Select None</button>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Copy</button>
+                    <button type="button" id="cancelCopySingleEnvVar" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="js/utils.js"></script>
+    <script type="module" src="js/api.js"></script>
+    <script type="module" src="js/modals.js"></script>
+    <script type="module" src="js/clientView.js"></script>
+    <script type="module" src="js/kanbanView.js"></script>
+    <script type="module" src="js/serverView.js"></script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>

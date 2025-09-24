@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/Users/lev.volkovich/Documents/mcp-config-manager/logs/.8476b6fa26fbbd7552851621e5713df0eac61270-audit.json",
+    "files": [
+        {
+            "date": 1758694267882,
+            "name": "/Users/lev.volkovich/Documents/mcp-config-manager/logs/mcp-puppeteer-2025-09-24.log",
+            "hash": "2c7526d091958c51c22942fac37763d27159c27fb821b1ca8c903b9655b12a89"
+        }
+    ],
+    "hashType": "sha256"
+}

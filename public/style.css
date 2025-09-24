@@ -300,8 +300,8 @@ header p {
 }
 
 .env-var-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr auto;
+    display: flex;
+    align-items: center;
     gap: 10px;
     margin-bottom: 10px;
 }
@@ -378,10 +378,18 @@ header p {
     display: flex;
     align-items: center;
     margin-bottom: 8px;
+    gap: 8px; /* Add gap for consistent spacing */
 }
 
-.checkbox-item input {
-    margin-right: 8px;
+.checkbox-item input[type="checkbox"] {
+    margin-right: 0; /* Reset default margin */
+    vertical-align: middle; /* Align checkbox vertically */
+    width: auto; /* Prevent input from taking full width */
+}
+
+.checkbox-item label {
+    vertical-align: middle; /* Align label text vertically */
+    margin-bottom: 0; /* Reset default margin */
 }
 
 .copy-options {
@@ -453,7 +461,7 @@ header p {
 }
 
 .kanban-card {
-    background: white;
+    background: var(--server-color, white);
     border: 1px solid #e0e0e0;
     border-radius: 6px;
     padding: 12px;
@@ -507,6 +515,18 @@ header p {
     filter: hue-rotate(340deg);
 }
 
+.icon-btn.add-env-var {
+    color: #2ecc71;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.icon-btn.no-bg {
+    background: none;
+    border: none;
+    padding: 0;
+}
+
 .kanban-card-details {
     font-size: 12px;
     color: #7f8c8d;
@@ -540,4 +560,81 @@ header p {
     .kanban-column {
         flex: 1 1 auto;
     }
+}
+
+/* New styles for Server View */
+.server-list-all {
+    display: grid;
+    gap: 20px;
+    padding: 20px;
+}
+
+.server-card-all {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    padding: 15px;
+}
+
+.server-header-all {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.server-name-all {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.global-tag {
+    background: #2ecc71;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    margin-left: 10px;
+}
+
+.server-actions-all {
+    display: flex;
+    gap: 10px;
+}
+
+.server-details-all {
+    font-size: 0.9em;
+    color: #555;
+}
+
+.server-details-all .detail-row {
+    margin-bottom: 5px;
+}
+
+.server-clients {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+    color: #7f8c8d;
+}
+
+/* Styles for the new modals */
+#editServerEnvModal .modal-content,
+#addServerToClientsModal .modal-content {
+    max-width: 600px;
+}
+
+#editServerEnvName, #addServerToClientsName {
+    font-weight: 600;
+    color: #3498db;
+}
+
+#addServerToClientsConfig {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    font-family: 'Courier New', monospace;
 }

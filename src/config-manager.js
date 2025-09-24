@@ -2,12 +2,124 @@ import * as fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 
-import { CLIENTS } from './clients.js';
+import { CLIENTS as PROD_CLIENTS } from './clients.js';
+import { MOCK_CLIENTS, MOCK_GLOBAL_SERVERS_PATH } from '../test/mock-clients.js';
+
+const USE_MOCK_CLIENTS = process.env.MCP_USE_MOCK_CLIENTS === 'true';
+const CLIENTS = USE_MOCK_CLIENTS ? MOCK_CLIENTS : PROD_CLIENTS;
+const GLOBAL_SERVERS_PATH = USE_MOCK_CLIENTS ? MOCK_GLOBAL_SERVERS_PATH : path.join(os.homedir(), '.mcp-global-servers.json');
 
 export class MCPConfigManager {
   constructor() {
     this.platform = os.platform();
     this.availableClients = {};
+  }
+
+  async readGlobalServers() {
+    try {
+      const content = await fs.readFile(GLOBAL_SERVERS_PATH, 'utf-8');
+      return JSON.parse(content);
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        throw error;
+      }
+      // If file doesn't exist, return empty object
+      return {};
+    }
+  }
+
+  async writeGlobalServers(globalServers) {
+    await fs.writeFile(GLOBAL_SERVERS_PATH, JSON.stringify(globalServers, null, 2));
+  }
+
+  async addGlobalServer(serverName, serverConfig) {
+    const globalServers = await this.readGlobalServers();
+    globalServers[serverName] = serverConfig;
+    await this.writeGlobalServers(globalServers);
+  }
+
+  async removeGlobalServer(serverName) {
+    const globalServers = await this.readGlobalServers();
+    delete globalServers[serverName];
+    await this.writeGlobalServers(globalServers);
+  }
+
+  async updateGlobalServerEnv(serverName, envKey, envValue) {
+    const globalServers = await this.readGlobalServers();
+    if (!globalServers[serverName]) {
+      throw new Error(`Global server ${serverName} not found`);
+    }
+
+    if (!globalServers[serverName].env) {
+      globalServers[serverName].env = {};
+    }
+
+    if (envValue === null || envValue === undefined) {
+      delete globalServers[serverName].env[envKey];
+    } else {
+      globalServers[serverName].env[envKey] = envValue;
+    }
+
+    await this.writeGlobalServers(globalServers);
+  }
+
+  async getAllServers() {
+    return this.readGlobalServers();
+  }
+
+  // Helper to generate a consistent hash for a server config
+  getServerConfigHash(config) {
+    // Exclude env for now, or handle it specially if exact env matching is needed
+    const { env, ...rest } = config;
+    return JSON.stringify(rest);
+  }
+
+  async getServersInClients() {
+    const allServers = {}; // serverName: { clients: [{id, name, configPath}], global: boolean, config: {}, configHash: string }
+    const globalServers = await this.readGlobalServers();
+
+    // Add global servers first
+    for (const [serverName, serverConfig] of Object.entries(globalServers)) {
+      allServers[serverName] = {
+        clients: [],
+        global: true,
+        config: serverConfig,
+        configHash: this.getServerConfigHash(serverConfig)
+      };
+    }
+
+    const availableClients = await this.getAvailableClients();
+
+    for (const [clientId, clientInfo] of Object.entries(availableClients)) {
+      try {
+        const clientConfig = await this.readConfig(clientId);
+
+        for (const [serverName, serverConfig] of Object.entries(clientConfig.servers)) {
+          if (!allServers[serverName]) {
+            allServers[serverName] = {
+              clients: [],
+              global: false, // Will be true if it's also in globalServers
+              config: serverConfig || {}, // Ensure config is an object
+              configHash: this.getServerConfigHash(serverConfig || {})
+            };
+          }
+          allServers[serverName].clients.push({
+            id: clientId,
+            name: clientInfo.name,
+            configPath: this.getConfigPath(clientId)
+          });
+          // If a server exists globally and in a client, mark it as global
+          if (globalServers[serverName]) {
+            allServers[serverName].global = true;
+          }
+        }
+      } catch (error) {
+        console.error(`Error in getServersInClients for client ${clientId}:`, error);
+        // Client config might not exist, or other read error, skip
+        console.warn(`Could not read config for client ${clientId}: ${error.message}`);
+      }
+    }
+    return allServers;
   }
 
   async detectClients() {
@@ -71,22 +183,34 @@ export class MCPConfigManager {
     const platformKey = this.platform === 'darwin' ? 'darwin' :
                        this.platform === 'win32' ? 'win32' : 'linux';
 
-    return clientConfig.configPaths[platformKey];
+    const configPath = clientConfig.configPaths[platformKey];
+    return configPath;
   }
 
   async readConfig(client) {
     const configPath = this.getConfigPath(client);
+    let clientConfig = { servers: {} };
 
     try {
       const content = await fs.readFile(configPath, 'utf-8');
-      const config = JSON.parse(content);
-      return this.normalizeConfig(config, CLIENTS[client].format);
+      const parsedContent = JSON.parse(content);
+      clientConfig = this.normalizeConfig(parsedContent, CLIENTS[client].format);
     } catch (error) {
-      if (error.code === 'ENOENT') {
-        return { servers: {} };
+      if (error.code !== 'ENOENT') {
+        throw error;
       }
-      throw error;
+      // If file doesn't exist, clientConfig remains { servers: {} }
     }
+
+    const globalServers = await this.readGlobalServers();
+
+    // Merge global servers into clientConfig, client-specific overrides global
+    const mergedServers = { ...globalServers };
+    for (const [serverName, serverDetails] of Object.entries(clientConfig.servers)) {
+      mergedServers[serverName] = { ...mergedServers[serverName], ...serverDetails };
+    }
+
+    return { servers: mergedServers };
   }
 
   normalizeConfig(config, format) {
@@ -139,6 +263,19 @@ export class MCPConfigManager {
     await this.writeConfig(client, config);
   }
 
+  async addServerToMultipleClients(serverName, serverConfig, clientIds) {
+    const results = [];
+    for (const clientId of clientIds) {
+      try {
+        await this.addServer(clientId, serverName, serverConfig);
+        results.push({ client: clientId, server: serverName, success: true });
+      } catch (error) {
+        results.push({ client: clientId, server: serverName, success: false, error: error.message });
+      }
+    }
+    return results;
+  }
+
   async removeServer(client, serverName) {
     const config = await this.readConfig(client);
     delete config.servers[serverName];
@@ -157,7 +294,8 @@ export class MCPConfigManager {
 
     if (envValue === null || envValue === undefined) {
       delete config.servers[serverName].env[envKey];
-    } else {
+    }
+    else {
       config.servers[serverName].env[envKey] = envValue;
     }
 
@@ -187,7 +325,8 @@ export class MCPConfigManager {
     if (outputPath) {
       await fs.writeFile(outputPath, JSON.stringify(exportData, null, 2));
       return outputPath;
-    } else {
+    }
+    else {
       return exportData;
     }
   }
@@ -210,7 +349,8 @@ export class MCPConfigManager {
     if (outputPath) {
       await fs.writeFile(outputPath, JSON.stringify(exportData, null, 2));
       return outputPath;
-    } else {
+    }
+    else {
       return exportData;
     }
   }
@@ -221,9 +361,11 @@ export class MCPConfigManager {
 
     if (importData.servers) {
       await this.writeConfig(client, { servers: importData.servers });
-    } else if (importData.config) {
+    }
+    else if (importData.config) {
       await this.addServer(client, importData.serverName, importData.config);
-    } else {
+    }
+    else {
       throw new Error('Invalid import file format');
     }
   }
@@ -290,7 +432,8 @@ export class MCPConfigManager {
 
             if (newValue === null || newValue === undefined) {
               delete serverConfig.env[envKey];
-            } else {
+            }
+            else {
               serverConfig.env[envKey] = newValue;
             }
 
@@ -320,6 +463,42 @@ export class MCPConfigManager {
       }
     }
 
+    return results;
+  }
+
+  async renameServerAcrossClients(oldName, newName) {
+    if (oldName === newName) {
+      return { success: true, message: "Server name is the same, no action taken." };
+    }
+
+    const results = { global: false, clients: [] };
+
+    // Handle global servers
+    const globalServers = await this.readGlobalServers();
+    if (globalServers[oldName]) {
+      globalServers[newName] = globalServers[oldName];
+      delete globalServers[oldName];
+      await this.writeGlobalServers(globalServers);
+      results.global = true;
+    }
+
+    // Handle clients
+    const availableClients = await this.getAvailableClients();
+    for (const [clientId, clientInfo] of Object.entries(availableClients)) {
+      try {
+        const config = await this.readConfig(clientId);
+        if (config.servers[oldName]) {
+          config.servers[newName] = config.servers[oldName];
+          delete config.servers[oldName];
+          await this.writeConfig(clientId, config);
+          results.clients.push({ id: clientId, name: clientInfo.name, success: true });
+        } else {
+          results.clients.push({ id: clientId, name: clientInfo.name, success: false, message: "Server not found in client config." });
+        }
+      } catch (error) {
+        results.clients.push({ id: clientId, name: clientInfo.name, success: false, error: error.message });
+      }
+    }
     return results;
   }
 }

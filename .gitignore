@@ -3,3 +3,5 @@ node_modules
 .mcp.json
 .vscode/mcp.json
 .cursor/mcp.json
+.gemini/
+gha-creds-*.json
