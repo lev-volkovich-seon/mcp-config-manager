@@ -11,3 +11,7 @@ coverage/
 test-results/
 playwright-report/
 test-results.xml
+
+# Ignore all markdown files except README.md
+*.md
+!README.md

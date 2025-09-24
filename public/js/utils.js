@@ -50,9 +50,87 @@ export function switchTab(tab) {
 
     // Sync data between tabs
     if (tab === 'json') {
-        const config = buildConfigFromForm();
-        document.getElementById('jsonEditor').value = JSON.stringify(config, null, 2);
+        // When switching to JSON tab, update only the fields that form controls
+        try {
+            const existingJson = JSON.parse(document.getElementById('jsonEditor').value);
+            const formConfig = buildConfigFromForm();
+
+            // Merge form data into existing JSON, preserving other properties
+            const mergedConfig = { ...existingJson };
+
+            // Update command - if empty in form, remove from JSON
+            if (formConfig.command) {
+                mergedConfig.command = formConfig.command;
+            } else if (document.getElementById('serverCommand').value === '') {
+                delete mergedConfig.command;
+            }
+
+            // Update args - if empty in form, remove from JSON
+            if (formConfig.args && formConfig.args.length > 0) {
+                mergedConfig.args = formConfig.args;
+            } else if (document.getElementById('serverArgs').value === '') {
+                delete mergedConfig.args;
+            }
+
+            // For env vars, only update/remove the ones that were shown in form
+            // Preserve any env vars that weren't displayed in the form
+            if (mergedConfig.env || formConfig.env) {
+                // Start with ALL existing env vars (including ones not shown in form)
+                const updatedEnv = { ...(mergedConfig.env || {}) };
+
+                // Get the keys that were initially loaded into the form
+                const initialFormKeys = document.getElementById('envVars').dataset.initialKeys;
+                const initialKeys = initialFormKeys ? JSON.parse(initialFormKeys) : [];
+
+                // Create a set of initial keys for quick lookup
+                const initialKeysSet = new Set(initialKeys);
+
+                // Get the current state of form env vars
+                const currentFormEnvs = {};
+                const currentFormKeys = new Set();
+                document.querySelectorAll('.env-var-row').forEach(row => {
+                    const key = row.querySelector('.env-key').value;
+                    const value = row.querySelector('.env-value').value;
+                    if (key) {
+                        currentFormKeys.add(key);
+                        currentFormEnvs[key] = value;
+                    }
+                });
+
+                // Update or remove only the env vars that were initially shown in the form
+                initialKeys.forEach(key => {
+                    if (currentFormKeys.has(key)) {
+                        // Key still exists in form, update its value
+                        updatedEnv[key] = currentFormEnvs[key];
+                    } else {
+                        // Key was removed from form, delete it
+                        delete updatedEnv[key];
+                    }
+                });
+
+                // Add any NEW env vars that were added in the form
+                currentFormKeys.forEach(key => {
+                    if (!initialKeysSet.has(key)) {
+                        // This is a new key added in the form
+                        updatedEnv[key] = currentFormEnvs[key];
+                    }
+                });
+
+                if (Object.keys(updatedEnv).length > 0) {
+                    mergedConfig.env = updatedEnv;
+                } else {
+                    delete mergedConfig.env;
+                }
+            }
+
+            document.getElementById('jsonEditor').value = JSON.stringify(mergedConfig, null, 2);
+        } catch (e) {
+            // If existing JSON is invalid, just use form data
+            const config = buildConfigFromForm();
+            document.getElementById('jsonEditor').value = JSON.stringify(config, null, 2);
+        }
     } else {
+        // When switching to form tab, only update form with supported fields
         try {
             const config = JSON.parse(document.getElementById('jsonEditor').value);
             updateFormFromConfig(config);
@@ -86,14 +164,22 @@ export function buildConfigFromForm() {
 }
 
 export function updateFormFromConfig(config) {
+    // Only sync the supported fields to the form, ignore any other JSON properties
     document.getElementById('serverCommand').value = config.command || '';
     document.getElementById('serverArgs').value = config.args?.join('\n') || '';
 
     const envVarsDiv = document.getElementById('envVars');
     envVarsDiv.innerHTML = '';
-    if (config.env) {
+
+    // Track which env keys we're loading into the form
+    const loadedEnvKeys = [];
+    if (config.env && typeof config.env === 'object') {
         for (const [key, value] of Object.entries(config.env)) {
             addEnvVarRow(envVarsDiv, key, value);
+            loadedEnvKeys.push(key);
         }
     }
+
+    // Store the initially loaded keys so we know what to update later
+    envVarsDiv.dataset.initialKeys = JSON.stringify(loadedEnvKeys);
 }

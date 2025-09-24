@@ -42,14 +42,17 @@ export function showServerModal(serverName = null, serverConfig = null, loadClie
 
     const envVarsDiv = document.getElementById('envVars');
     envVarsDiv.innerHTML = '';
+    const loadedEnvKeys = [];
 
     if (serverConfig?.env) {
         for (const entry of Object.entries(serverConfig.env)) {
             const key = entry[0];
             const value = entry[1];
             addEnvVarRow(envVarsDiv, key, value);
+            loadedEnvKeys.push(key);
         }
     }
+    envVarsDiv.dataset.initialKeys = JSON.stringify(loadedEnvKeys);
 
     document.getElementById('addEnvVar').removeEventListener('click', addEnvVarRow);
     const addEnvVarButton = document.getElementById('addEnvVar');
@@ -135,21 +138,13 @@ async function saveServer(originalName, loadClientServers, renderKanbanBoard, lo
 
     if (activeTab === 'json') {
         try {
-            const jsonData = JSON.parse(document.getElementById('jsonEditor').value);
-            const serverNames = Object.keys(jsonData);
+            serverConfig = JSON.parse(document.getElementById('jsonEditor').value);
+            newServerName = document.getElementById('serverName').value;
 
-            if (serverNames.length === 0) {
-                alert('JSON must contain at least one server configuration.');
+            if (!newServerName) {
+                alert('Server name cannot be empty.');
                 return;
             }
-
-            if (serverNames.length > 1) {
-                alert('JSON must contain exactly one server configuration. Multiple servers found: ' + serverNames.join(', '));
-                return;
-            }
-
-            newServerName = serverNames[0];
-            serverConfig = jsonData[newServerName];
         } catch (e) {
             alert('Invalid JSON format');
             return;
@@ -163,7 +158,64 @@ async function saveServer(originalName, loadClientServers, renderKanbanBoard, lo
             return;
         }
 
-        serverConfig = buildConfigFromForm();
+        try {
+            const existingJson = JSON.parse(document.getElementById('jsonEditor').value);
+            const formConfig = buildConfigFromForm();
+            const mergedConfig = { ...existingJson };
+
+            if (formConfig.command) {
+                mergedConfig.command = formConfig.command;
+            } else if (document.getElementById('serverCommand').value === '') {
+                delete mergedConfig.command;
+            }
+
+            if (formConfig.args && formConfig.args.length > 0) {
+                mergedConfig.args = formConfig.args;
+            } else if (document.getElementById('serverArgs').value === '') {
+                delete mergedConfig.args;
+            }
+
+            if (mergedConfig.env || formConfig.env) {
+                const updatedEnv = { ...(mergedConfig.env || {}) };
+                const initialFormKeys = document.getElementById('envVars').dataset.initialKeys;
+                const initialKeys = initialFormKeys ? JSON.parse(initialFormKeys) : [];
+                const initialKeysSet = new Set(initialKeys);
+                const currentFormEnvs = {};
+                const currentFormKeys = new Set();
+                document.querySelectorAll('.env-var-row').forEach(row => {
+                    const key = row.querySelector('.env-key').value;
+                    const value = row.querySelector('.env-value').value;
+                    if (key) {
+                        currentFormKeys.add(key);
+                        currentFormEnvs[key] = value;
+                    }
+                });
+
+                initialKeys.forEach(key => {
+                    if (currentFormKeys.has(key)) {
+                        updatedEnv[key] = currentFormEnvs[key];
+                    } else {
+                        delete updatedEnv[key];
+                    }
+                });
+
+                currentFormKeys.forEach(key => {
+                    if (!initialKeysSet.has(key)) {
+                        updatedEnv[key] = currentFormEnvs[key];
+                    }
+                });
+
+                if (Object.keys(updatedEnv).length > 0) {
+                    mergedConfig.env = updatedEnv;
+                } else {
+                    delete mergedConfig.env;
+                }
+            }
+            serverConfig = mergedConfig;
+        } catch (e) {
+            alert('Could not merge configurations. Please check the JSON tab for errors.');
+            return;
+        }
     }
 
     if (originalName && newServerName !== originalName) {
@@ -662,6 +714,11 @@ export const showCopySingleEnvVarModal = async (serverName, envKey, envValue, so
 
     modal.style.display = 'flex';
 
+    // Set up cancel button handler when modal is shown
+    document.getElementById('cancelCopySingleEnvVar').onclick = () => {
+        modal.style.display = 'none';
+    };
+
     // Re-attach form submission handler after cloning
     document.getElementById('copySingleEnvVarForm').onsubmit = async (e) => {
         e.preventDefault();
@@ -687,9 +744,5 @@ export const showCopySingleEnvVarModal = async (serverName, envKey, envValue, so
             alert('Failed to copy environment variable: ' + error.message);
         }
     };
-};
-
-document.getElementById('cancelCopySingleEnvVar').onclick = () => {
-    document.getElementById('copySingleEnvVarModal').style.display = 'none';
 };
 

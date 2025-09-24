@@ -135,6 +135,7 @@ export class MCPConfigManager {
       }
     }
     this.availableClients = detectedClients;
+    return detectedClients;
   }
 
   async getAvailableClients() {
