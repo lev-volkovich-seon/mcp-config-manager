@@ -646,7 +646,6 @@ export const showCopySingleEnvVarModal = async (serverName, envKey, envValue, so
                 `;
                 copySingleEnvVarTargetClientsDiv.appendChild(item);
             }
-        }
         } catch (error) {
             console.warn(`Could not read config for client ${client.id}:`, error);
             // Skip clients that cannot be read

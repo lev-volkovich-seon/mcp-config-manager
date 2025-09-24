@@ -193,5 +193,6 @@ export function startServer(port = 3456) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  startServer();
+  const port = process.env.PORT || 3456;
+  startServer(port);
 }
