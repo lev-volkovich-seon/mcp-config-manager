@@ -148,6 +148,62 @@ Standard MCP server configuration:
 
 Environment variables may contain sensitive data like API keys. The tool masks values containing "KEY" or "SECRET" in the display but stores them in plain text in config files.
 
+## Development & Testing
+
+### Running Tests
+
+The project includes comprehensive test coverage:
+
+```bash
+# Run all tests (CLI + UI)
+npm test
+
+# Run CLI tests only (17 tests)
+npm run test:cli
+
+# Run UI tests only (2 tests) - requires Playwright
+npm run test:ui
+
+# Run specific test file
+npx mocha test/ui-simple.test.js --timeout 30000
+```
+
+### Test Coverage
+
+- **CLI Tests**: 17/17 ✅ - Comprehensive command-line functionality testing
+- **UI Tests**: 2/2 ✅ - Frontend integration and API communication testing
+- **Integration Tests**: End-to-end dual-mode form/JSON editing validation
+
+### Development Setup
+
+```bash
+# Install dependencies (includes Playwright for UI testing)
+npm install
+
+# Install Playwright browsers (for UI tests)
+npx playwright install chromium
+
+# Start development server with mock data
+MCP_USE_MOCK_CLIENTS=true npm run web
+
+# Run server on custom port
+PORT=3457 npm run web
+```
+
+### Testing with Mock Clients
+
+For development and testing, you can use mock clients:
+
+```bash
+# Enable mock client mode
+export MCP_USE_MOCK_CLIENTS=true
+
+# Start server (will use test clients instead of real ones)
+npm run web
+```
+
+This allows testing functionality without affecting real MCP client configurations.
+
 ## License
 
 MIT
