@@ -1,0 +1,13 @@
+{
+  "servers": {
+    "imported-server": {
+      "command": "python",
+      "args": [
+        "imported.py"
+      ],
+      "env": {
+        "IMPORT_KEY": "imported-value"
+      }
+    }
+  }
+}

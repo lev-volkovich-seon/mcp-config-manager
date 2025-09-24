@@ -8,7 +8,11 @@
   },
   "scripts": {
     "start": "node src/cli.js",
-    "web": "node src/server.js"
+    "web": "node src/server.js",
+    "test": "mocha test/**/*.test.js --timeout 30000",
+    "test:cli": "mocha test/cli.test.js --timeout 10000",
+    "test:ui": "mocha test/ui.test.js --timeout 60000",
+    "test:integration": "mocha test/integration.test.js --timeout 60000"
   },
   "keywords": [
     "mcp",

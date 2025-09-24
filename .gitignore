@@ -5,3 +5,9 @@ node_modules
 .cursor/mcp.json
 .gemini/
 gha-creds-*.json
+logs/
+.DS_Store
+coverage/
+test-results/
+playwright-report/
+test-results.xml

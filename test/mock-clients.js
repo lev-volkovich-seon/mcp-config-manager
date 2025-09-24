@@ -29,6 +29,34 @@ export const MOCK_CLIENTS = {
         },
         format: 'mcpServers',
     },
+    // Add real client mock versions for comprehensive testing
+    'claude': {
+        name: 'Claude Desktop',
+        configPaths: {
+            darwin: path.join(os.tmpdir(), 'mcp-config-manager-test', 'claude.json'),
+            linux: path.join(os.tmpdir(), 'mcp-config-manager-test', 'claude.json'),
+            win32: path.join(os.tmpdir(), 'mcp-config-manager-test', 'claude.json'),
+        },
+        format: 'mcpServers',
+    },
+    'vscode': {
+        name: 'VS Code',
+        configPaths: {
+            darwin: path.join(os.tmpdir(), 'mcp-config-manager-test', 'vscode.json'),
+            linux: path.join(os.tmpdir(), 'mcp-config-manager-test', 'vscode.json'),
+            win32: path.join(os.tmpdir(), 'mcp-config-manager-test', 'vscode.json'),
+        },
+        format: 'mcp.servers',
+    },
+    'gemini': {
+        name: 'Gemini',
+        configPaths: {
+            darwin: path.join(os.tmpdir(), 'mcp-config-manager-test', 'gemini.json'),
+            linux: path.join(os.tmpdir(), 'mcp-config-manager-test', 'gemini.json'),
+            win32: path.join(os.tmpdir(), 'mcp-config-manager-test', 'gemini.json'),
+        },
+        format: 'mcpServers',
+    },
 };
 
 export const MOCK_GLOBAL_SERVERS_PATH = path.join(os.tmpdir(), 'mcp-config-manager-test', '.mcp-global-servers.json');
