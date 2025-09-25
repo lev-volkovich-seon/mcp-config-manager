@@ -1,7 +1,7 @@
 import { addEnvVarRow, switchTab, buildConfigFromForm, updateFormFromConfig } from './utils.js';
 import {
     addServerApi, updateServerApi, deleteServerApi, copyServerApi,
-    exportConfigApi, exportServerApi, importConfigApi, getClientConfigApi, renameServerApi, updateServerEnvApi
+    exportConfigApi, exportServerApi, importConfigApi, getClientConfigApi, renameServerApi, updateServerEnvApi, updateServerInClientsApi
 } from './api.js';
 
 let clients = []; // This will be passed from main.js
@@ -21,8 +21,14 @@ export function showServerModal(serverName = null, serverConfig = null, loadClie
 
     // Store the client ID in the modal's data attribute to preserve it
     if (clientId) {
-        currentClient = clientId;
-        modal.dataset.clientId = clientId;
+        if (Array.isArray(clientId)) {
+            modal.dataset.clientIds = JSON.stringify(clientId);
+            delete modal.dataset.clientId; // Ensure single client id is not set
+        } else {
+            currentClient = clientId;
+            modal.dataset.clientId = clientId;
+            delete modal.dataset.clientIds; // Ensure multiple client ids are not set
+        }
     } else if (!currentClient && modal.dataset.clientId) {
         // Restore from modal's data attribute if currentClient is null
         currentClient = modal.dataset.clientId;
@@ -72,36 +78,6 @@ export function showServerModal(serverName = null, serverConfig = null, loadClie
         }
     });
 
-    // Client selection for applying changes (removed as per user request)
-    // const serverModalClientSelectionDiv = document.getElementById('serverModalClientSelection');
-    // const serverModalClientsDiv = document.getElementById('serverModalClients');
-    // const selectAllServerModalClientsBtn = document.getElementById('selectAllServerModalClients');
-    // const selectNoneServerModalClientsBtn = document.getElementById('selectNoneServerModalClients');
-
-    // if (serverName) { // Only show client selection when editing an existing server
-    //     serverModalClientSelectionDiv.style.display = 'block';
-    //     serverModalClientsDiv.innerHTML = '';
-    //     clients.forEach(client => {
-    //         const item = document.createElement('div');
-    //         item.className = 'checkbox-item';
-    //         const isChecked = (clientId && client.id === clientId); // Pre-select current client if editing
-    //         item.innerHTML = `
-    //             <input type="checkbox" id="serverModalClient-${client.id}" value="${client.id}" ${isChecked ? 'checked' : ''}>
-    //             <label for="serverModalClient-${client.id}">${client.name}</label>
-    //         `;
-    //         serverModalClientsDiv.appendChild(item);
-    //     });
-
-    //     selectAllServerModalClientsBtn.onclick = () => {
-    //         serverModalClientsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
-    //     };
-    //     selectNoneServerModalClientsBtn.onclick = () => {
-    //         serverModalClientsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-    //     };
-    // } else { // Hide client selection when adding a new server
-    //     serverModalClientSelectionDiv.style.display = 'none';
-    // }
-
     // Setup tab switching
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.onclick = () => switchTab(btn.dataset.tab);
@@ -112,9 +88,10 @@ export function showServerModal(serverName = null, serverConfig = null, loadClie
 
     form.onsubmit = async (e) => {
         e.preventDefault();
-        // Double-check we have a valid client before saving
         const modalClient = modal.dataset.clientId || currentClient;
-        if (!modalClient) {
+        const modalClients = modal.dataset.clientIds ? JSON.parse(modal.dataset.clientIds) : null;
+
+        if (!modalClient && !modalClients) {
             alert('No client selected. Please close this modal and select a client first.');
             return;
         }
@@ -123,11 +100,11 @@ export function showServerModal(serverName = null, serverConfig = null, loadClie
 }
 
 async function saveServer(originalName, loadClientServers, renderKanbanBoard, loadClientsFn) {
-    // Get the client ID from modal's data attribute or currentClient
     const modal = document.getElementById('serverModal');
     const clientToUse = modal.dataset.clientId || currentClient;
+    const clientsToUse = modal.dataset.clientIds ? JSON.parse(modal.dataset.clientIds) : null;
 
-    if (!clientToUse) {
+    if (!clientToUse && !clientsToUse) {
         alert('No client selected. Please close this modal and try again.');
         return;
     }
@@ -235,16 +212,16 @@ async function saveServer(originalName, loadClientServers, renderKanbanBoard, lo
 
     try {
         let response;
-        if (originalName) {
-            // If originalName exists, it's an edit. Use the (potentially new) serverToSaveName.
+        if (clientsToUse) {
+            response = await updateServerInClientsApi(serverToSaveName, serverConfig, clientsToUse);
+        } else if (originalName) {
             response = await updateServerApi(clientToUse, serverToSaveName, serverConfig);
         } else {
-            // If originalName doesn't exist, it's an add. Use the serverToSaveName.
             response = await addServerApi(clientToUse, serverToSaveName, serverConfig);
         }
 
         if (!response.success) {
-            throw new Error(`Failed to save server to client ${clientToUse}`);
+            throw new Error(`Failed to save server`);
         }
 
         document.getElementById('serverModal').style.display = 'none';
@@ -258,15 +235,14 @@ async function saveServer(originalName, loadClientServers, renderKanbanBoard, lo
     }
 }
 
-export async function editServer(name, loadClientServers, clientId = null) {
+export async function editServer(name, loadClientServers, clientId = null, loadClientsFn = null) {
     try {
-        // Use the provided clientId, or fallback to currentClient
         const clientToUse = clientId || currentClient;
         if (!clientToUse) {
             throw new Error('No client selected for editing.');
         }
-        const config = await getClientConfigApi(clientToUse);
-        showServerModal(name, config.servers[name], loadClientServers, null, clientToUse);
+        const config = await getClientConfigApi(Array.isArray(clientToUse) ? clientToUse[0] : clientToUse);
+        showServerModal(name, config.servers[name], loadClientServers, loadClientServers, clientToUse, loadClientsFn);
     } catch (error) {
         alert('Failed to load server config: ' + error.message);
     }
@@ -295,6 +271,8 @@ export async function deleteServer(name, loadClientServers, renderKanbanBoard, l
         alert('Failed to delete server: ' + error.message);
     }
 }
+
+// ... (the rest of the file is unchanged)
 
 export function copyServer(serverName, loadClientsFn) {
     const modal = document.getElementById('copyModal');

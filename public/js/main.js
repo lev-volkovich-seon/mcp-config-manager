@@ -38,11 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
             initModals(clients, currentClient, window.loadClients);
 
             renderClientList();
-            if (currentView === 'kanban') {
-                renderKanbanBoard();
-            } else if (currentView === 'server') {
-                renderAllServers();
-            }
+            renderKanbanBoard();
+            renderAllServers();
         } catch (error) {
             console.error('Failed to load clients:', error);
             alert('Failed to load clients. Make sure the server is running.');

@@ -50,7 +50,7 @@ export async function renderAllServers() {
                     <span class="server-name-all">${serverName}</span>
                     ${serverData.global ? '<span class="global-tag">Global</span>' : ''}
                     <div class="server-actions-all">
-                        <button class="btn btn-small btn-secondary edit-server-full-btn" data-server-name="${serverName}" data-server-config='${JSON.stringify(serverData.config)}'>Edit</button>
+                        <button class="btn btn-small btn-secondary edit-server-full-btn" data-server-name="${serverName}" data-clients='${JSON.stringify(serverData.clients)}' data-server-config='${JSON.stringify(serverData.config)}'>Edit</button>
                         <button class="btn btn-small btn-primary add-to-clients-btn" data-server-name="${serverName}" data-server-config='${JSON.stringify(serverData.config)}'>Add to More Clients</button>
                         <button class="btn btn-small btn-secondary copy-to-clipboard-server-view-btn" data-server-name="${serverName}" data-server-config='${JSON.stringify(serverData.config)}'>📋</button>
                         <button class="btn btn-small btn-secondary export-server-view-btn" data-server-name="${serverName}">💾</button>
@@ -76,9 +76,11 @@ export async function renderAllServers() {
 function attachServerViewEventListeners() {
     document.querySelectorAll('.edit-server-full-btn').forEach(button => {
         button.addEventListener('click', (e) => {
-            const serverName = e.target.dataset.serverName;
-            const serverConfig = JSON.parse(e.target.dataset.serverConfig);
-            showServerModal(serverName, serverConfig, null, null, null, loadClientsCallback); // Pass loadClientsCallback
+            const serverName = e.currentTarget.dataset.serverName;
+            const serverConfig = JSON.parse(e.currentTarget.dataset.serverConfig);
+            const clients = JSON.parse(e.currentTarget.dataset.clients);
+            const clientIds = clients.map(c => c.id);
+            showServerModal(serverName, serverConfig, renderAllServers, null, clientIds, loadClientsCallback);
         });
     });
 

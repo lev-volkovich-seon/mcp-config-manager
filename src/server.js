@@ -95,6 +95,22 @@ export function startServer(port = 3456) {
     }
   });
 
+  app.put('/api/servers/:serverName/update-in-clients', async (req, res) => {
+    try {
+        const { serverConfig, clientIds } = req.body;
+        const serverName = req.params.serverName;
+
+        if (!serverConfig || !clientIds || !Array.isArray(clientIds)) {
+            return res.status(400).json({ error: 'Missing serverConfig or clientIds' });
+        }
+
+        const results = await manager.updateServerInMultipleClients(serverName, serverConfig, clientIds);
+        res.json({ success: true, results });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+  });
+
   app.put('/api/servers/:serverName/env', async (req, res) => {
     try {
       const { envKey, envValue, clientIds } = req.body;

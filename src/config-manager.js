@@ -277,6 +277,21 @@ export class MCPConfigManager {
     return results;
   }
 
+  async updateServerInMultipleClients(serverName, serverConfig, clientIds) {
+    const results = [];
+    for (const clientId of clientIds) {
+        try {
+            const config = await this.readConfig(clientId);
+            config.servers[serverName] = serverConfig;
+            await this.writeConfig(clientId, config);
+            results.push({ client: clientId, server: serverName, success: true });
+        } catch (error) {
+            results.push({ client: clientId, server: serverName, success: false, error: error.message });
+        }
+    }
+    return results;
+  }
+
   async removeServer(client, serverName) {
     const config = await this.readConfig(client);
     delete config.servers[serverName];

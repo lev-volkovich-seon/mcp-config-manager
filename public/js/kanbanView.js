@@ -196,7 +196,7 @@ const handleDrop = async (targetClient) => {
 
 export const editServerKanban = (clientId, serverName, event) => {
     event.stopPropagation();
-    editServer(serverName, () => window.loadClients(), clientId); // Pass clientId
+    editServer(serverName, renderKanbanBoard, clientId, loadClientsCallback);
 };
 
 export const deleteServerKanban = (clientId, serverName, event) => {
