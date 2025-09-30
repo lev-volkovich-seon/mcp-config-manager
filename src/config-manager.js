@@ -129,10 +129,11 @@ export class MCPConfigManager {
               configHash: this.getServerConfigHash(serverConfig || {})
             };
           }
+          const configPath = await this.getConfigPath(clientId);
           allServers[serverName].clients.push({
             id: clientId,
             name: clientInfo.name,
-            configPath: this.getConfigPath(clientId)
+            configPath
           });
           // If a server exists globally and in a client, mark it as global
           if (globalServers[serverName]) {
@@ -180,19 +181,21 @@ export class MCPConfigManager {
       try {
         const config = await this.readConfig(key);
         const serverCount = Object.keys(config.servers).length;
+        const configPath = await this.getConfigPath(key);
         clientsWithConfigs.push({
           id: key,
           name: client.name,
-          configPath: this.getConfigPath(key),
+          configPath,
           serverCount,
           exists: true
         });
       } catch (error) {
         console.error(`Error processing client ${key}:`, error.message);
+        const configPath = await this.getConfigPath(key);
         clientsWithConfigs.push({
           id: key,
           name: client.name,
-          configPath: this.getConfigPath(key),
+          configPath,
           serverCount: 0,
           exists: false
         });
