@@ -3,21 +3,46 @@ import path from 'path';
 import os from 'os';
 
 import { CLIENTS as PROD_CLIENTS } from './clients.js';
-import { MOCK_CLIENTS, MOCK_GLOBAL_SERVERS_PATH } from '../test/mock-clients.js';
 
 const USE_MOCK_CLIENTS = process.env.MCP_USE_MOCK_CLIENTS === 'true';
-const CLIENTS = USE_MOCK_CLIENTS ? MOCK_CLIENTS : PROD_CLIENTS;
-const GLOBAL_SERVERS_PATH = USE_MOCK_CLIENTS ? MOCK_GLOBAL_SERVERS_PATH : path.join(os.homedir(), '.mcp-global-servers.json');
 
 export class MCPConfigManager {
   constructor() {
     this.platform = os.platform();
     this.availableClients = {};
+    this.clients = PROD_CLIENTS;
+    this.globalServersPath = path.join(os.homedir(), '.mcp-global-servers.json');
+    this.mockClientsInitialized = false;
+  }
+
+  async initializeMockClients() {
+    if (USE_MOCK_CLIENTS && !this.mockClientsInitialized) {
+      try {
+        const mockModule = await import('../test/mock-clients.js');
+        this.clients = mockModule.MOCK_CLIENTS;
+        this.globalServersPath = mockModule.MOCK_GLOBAL_SERVERS_PATH;
+        this.mockClientsInitialized = true;
+      } catch (error) {
+        console.warn('Mock clients not available, using production clients instead');
+        // Fall back to production clients if mock clients are not available
+      }
+    }
+  }
+
+  async getClients() {
+    await this.initializeMockClients();
+    return this.clients;
+  }
+
+  async getGlobalServersPath() {
+    await this.initializeMockClients();
+    return this.globalServersPath;
   }
 
   async readGlobalServers() {
     try {
-      const content = await fs.readFile(GLOBAL_SERVERS_PATH, 'utf-8');
+      const globalPath = await this.getGlobalServersPath();
+      const content = await fs.readFile(globalPath, 'utf-8');
       return JSON.parse(content);
     } catch (error) {
       if (error.code !== 'ENOENT') {
@@ -29,7 +54,8 @@ export class MCPConfigManager {
   }
 
   async writeGlobalServers(globalServers) {
-    await fs.writeFile(GLOBAL_SERVERS_PATH, JSON.stringify(globalServers, null, 2));
+    const globalPath = await this.getGlobalServersPath();
+    await fs.writeFile(globalPath, JSON.stringify(globalServers, null, 2));
   }
 
   async addGlobalServer(serverName, serverConfig) {
@@ -124,7 +150,8 @@ export class MCPConfigManager {
 
   async detectClients() {
     const detectedClients = {};
-    for (const [id, client] of Object.entries(CLIENTS)) {
+    const clients = await this.getClients();
+    for (const [id, client] of Object.entries(clients)) {
       const configPath = client.configPaths[os.platform()];
       const absoluteConfigPath = path.isAbsolute(configPath) ? configPath : path.join(process.cwd(), configPath);
       try {
@@ -175,8 +202,9 @@ export class MCPConfigManager {
     return clientsWithConfigs;
   }
 
-  getConfigPath(client) {
-    const clientConfig = CLIENTS[client];
+  async getConfigPath(client) {
+    const clients = await this.getClients();
+    const clientConfig = clients[client];
     if (!clientConfig) {
       throw new Error(`Unknown client: ${client}`);
     }
@@ -189,13 +217,14 @@ export class MCPConfigManager {
   }
 
   async readConfig(client) {
-    const configPath = this.getConfigPath(client);
+    const configPath = await this.getConfigPath(client);
     let clientConfig = { servers: {} };
 
     try {
       const content = await fs.readFile(configPath, 'utf-8');
       const parsedContent = JSON.parse(content);
-      clientConfig = this.normalizeConfig(parsedContent, CLIENTS[client].format);
+      const clients = await this.getClients();
+      clientConfig = this.normalizeConfig(parsedContent, clients[client].format);
     } catch (error) {
       if (error.code !== 'ENOENT') {
         throw error;
@@ -239,8 +268,9 @@ export class MCPConfigManager {
   }
 
   async writeConfig(client, config) {
-    const configPath = this.getConfigPath(client);
-    const clientConfig = CLIENTS[client];
+    const configPath = await this.getConfigPath(client);
+    const clients = await this.getClients();
+    const clientConfig = clients[client];
 
     let originalConfig = {};
     try {
@@ -396,8 +426,9 @@ export class MCPConfigManager {
 
   async getAllEnvironmentVariables() {
     const envVarMap = new Map();
+    const clients = await this.getClients();
 
-    for (const [clientId, clientInfo] of Object.entries(CLIENTS)) {
+    for (const [clientId, clientInfo] of Object.entries(clients)) {
       try {
         const config = await this.readConfig(clientId);
 
@@ -430,8 +461,9 @@ export class MCPConfigManager {
 
   async updateEnvironmentVariableAcrossConfigs(envKey, newValue, targetServers = null) {
     const results = [];
+    const clients = await this.getClients();
 
-    for (const [clientId, clientInfo] of Object.entries(CLIENTS)) {
+    for (const [clientId, clientInfo] of Object.entries(clients)) {
       try {
         const config = await this.readConfig(clientId);
         let configModified = false;

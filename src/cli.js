@@ -6,7 +6,7 @@ import { MCPConfigManager } from './config-manager.js';
 const manager = new MCPConfigManager();
 
 program
-  .name('mcp-manager')
+  .name('mcp-config-manager')
   .description('CLI to manage MCP configurations across different AI clients')
   .version('1.0.0');
 
@@ -383,12 +383,108 @@ program
   .command('web')
   .description('Start the web UI server')
   .option('-p, --port <port>', 'Port to run the server on', '3456')
+  .option('-d, --daemon', 'Run in background as daemon')
   .action(async (options) => {
-    console.log(`Starting web UI server on port ${options.port}...`);
-    console.log(`Open http://localhost:${options.port} in your browser`);
+    if (options.daemon) {
+      const { spawn } = await import('child_process');
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      const os = await import('os');
 
-    const { startServer } = await import('./server.js');
-    startServer(parseInt(options.port));
+      const pidFile = path.join(os.tmpdir(), 'mcp-config-manager.pid');
+
+      try {
+        // Check if daemon is already running
+        const existingPid = await fs.readFile(pidFile, 'utf8');
+        const { execSync } = await import('child_process');
+        try {
+          execSync(`kill -0 ${existingPid}`, { stdio: 'ignore' });
+          console.log(`Web UI server already running on port ${options.port} (PID: ${existingPid})`);
+          console.log(`Open http://localhost:${options.port} in your browser`);
+          return;
+        } catch {
+          // Process not running, remove stale pid file
+          await fs.unlink(pidFile);
+        }
+      } catch {
+        // PID file doesn't exist
+      }
+
+      // Start daemon
+      const daemon = spawn(process.execPath, [process.argv[1], 'web', '--port', options.port], {
+        detached: true,
+        stdio: 'ignore'
+      });
+
+      daemon.unref();
+      await fs.writeFile(pidFile, daemon.pid.toString());
+
+      console.log(`Web UI server started as daemon on port ${options.port} (PID: ${daemon.pid})`);
+      console.log(`Open http://localhost:${options.port} in your browser`);
+      console.log(`Use 'mcp-config-manager stop' to stop the server`);
+    } else {
+      console.log(`Starting web UI server on port ${options.port}...`);
+      console.log(`Open http://localhost:${options.port} in your browser`);
+
+      const { startServer } = await import('./server.js');
+      startServer(parseInt(options.port));
+    }
+  });
+
+program
+  .command('start')
+  .description('Start the web UI server in background')
+  .option('-p, --port <port>', 'Port to run the server on', '3456')
+  .action(async (options) => {
+    // Call web command with daemon option
+    program.parse([process.argv[0], process.argv[1], 'web', '--daemon', '--port', options.port]);
+  });
+
+program
+  .command('stop')
+  .description('Stop the background web UI server')
+  .action(async () => {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    const os = await import('os');
+    const { execSync } = await import('child_process');
+
+    const pidFile = path.join(os.tmpdir(), 'mcp-config-manager.pid');
+
+    try {
+      const pid = await fs.readFile(pidFile, 'utf8');
+      execSync(`kill ${pid}`);
+      await fs.unlink(pidFile);
+      console.log(`Web UI server stopped (PID: ${pid})`);
+    } catch (error) {
+      console.log('No running web UI server found');
+    }
+  });
+
+program
+  .command('status')
+  .description('Check status of background web UI server')
+  .action(async () => {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    const os = await import('os');
+    const { execSync } = await import('child_process');
+
+    const pidFile = path.join(os.tmpdir(), 'mcp-config-manager.pid');
+
+    try {
+      const pid = await fs.readFile(pidFile, 'utf8');
+      try {
+        execSync(`kill -0 ${pid}`, { stdio: 'ignore' });
+        console.log(`Web UI server is running (PID: ${pid})`);
+        console.log(`Open http://localhost:3456 in your browser`);
+      } catch {
+        console.log('Web UI server is not running (stale PID file found)');
+        await fs.unlink(pidFile);
+      }
+    } catch {
+      console.log('Web UI server is not running');
+    }
   });
 
 program.parse();

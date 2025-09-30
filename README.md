@@ -101,11 +101,32 @@ npm run web
 
 ### Web UI
 
-Start the web server:
+#### Development (when cloning repository)
 ```bash
 npm run web
-# or
-mcp-manager web --port 3456
+```
+
+#### Global Installation
+After installing globally with `npm install -g mcp-config-manager`:
+
+**Start web server in foreground:**
+```bash
+mcp-config-manager web --port 3456
+```
+
+**Start web server as background daemon:**
+```bash
+mcp-config-manager start --port 3456
+```
+
+**Check daemon status:**
+```bash
+mcp-config-manager status
+```
+
+**Stop daemon:**
+```bash
+mcp-config-manager stop
 ```
 
 Then open http://localhost:3456 in your browser.
