@@ -1,15 +1,19 @@
-import { getClientConfigApi, copyServerApi } from './api.js';
-import { showServerModal, editServer, deleteServer, copyToClipboard, exportServer } from './modals.js';
+import { getClientConfigApi, copyServerApi, deleteServerApi } from './api.js';
+import { showServerModal, editServer, copyToClipboard, exportServer } from './modals.js';
 
 let clients = []; // This will be passed from main.js
 let draggedServer = null;
 let draggedFromClient = null;
 let loadClientsCallback = null; // Callback to main.js to reload all clients
+let listenersAttached = false; // Track if event listeners have been attached
 
 export function initKanbanView(allClients, loadClientsFn) {
     clients = allClients;
     loadClientsCallback = loadClientsFn;
-    attachKanbanViewEventListeners();
+    if (!listenersAttached) {
+        attachKanbanViewEventListeners();
+        listenersAttached = true;
+    }
 }
 
 // Simple hash function to generate a consistent color from a string
@@ -199,13 +203,22 @@ export const editServerKanban = (clientId, serverName, event) => {
     editServer(serverName, renderKanbanBoard, clientId, loadClientsCallback);
 };
 
-export const deleteServerKanban = (clientId, serverName, event) => {
+export const deleteServerKanban = async (clientId, serverName, event) => {
     event.stopPropagation();
     if (!confirm(`Are you sure you want to delete the server "${serverName}" from ${clients.find(c => c.id === clientId).name}?`)) {
         return;
     }
 
-    deleteServer(serverName, () => window.loadClients(), null, window.loadClients, clientId); // Pass clientId
+    try {
+        const response = await deleteServerApi(clientId, serverName);
+        if (response.success) {
+            await window.loadClients();
+        } else {
+            throw new Error('Failed to delete server');
+        }
+    } catch (error) {
+        alert('Failed to delete server: ' + error.message);
+    }
 };
 
 export const exportServerKanban = (clientId, serverName, event) => {
