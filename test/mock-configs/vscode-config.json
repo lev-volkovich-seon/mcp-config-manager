@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "database": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sqlite"],
+      "env": {
+        "DATABASE_PATH": "/path/to/database.db"
+      }
+    },
+    "web-scraper": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "env": {
+        "HEADLESS": "true"
+      }
+    }
+  }
+}

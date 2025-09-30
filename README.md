@@ -10,6 +10,7 @@ Simple CLI and web UI tool to manage Model Context Protocol (MCP) configurations
 - **Multi-client support**: Manage configs for a growing list of clients, including Claude, VS Code, Cursor, Windsurf, Gemini, and more. The tool can detect any client that follows the MCP specification.
 - **Simple CLI**: Command-line interface for quick operations
 - **Web UI**: Clean web interface with List and Kanban views
+- **Remote MCP Support**: Easy setup for remote MCP servers with just a name and URL
 - **Kanban Board**: Drag-and-drop servers between clients
 - **JSON Editor**: Edit server configs as raw JSON or using forms
 - **Bulk Operations**: Copy servers to multiple clients at once
@@ -17,6 +18,24 @@ Simple CLI and web UI tool to manage Model Context Protocol (MCP) configurations
 - **Cross-platform**: Works on macOS, Windows, and Linux
 - **Import/Export**: Share configurations between clients and users
 - **Environment variables**: Easily manage API keys and settings
+
+## Screenshots
+
+### List View
+![List View](docs/images/list-view.png)
+*Traditional interface with detailed server management, showing individual client configurations with checkboxes for bulk operations.*
+
+### Kanban View
+![Kanban View](docs/images/kanban-view.png)
+*Drag-and-drop interface displaying servers as cards organized by client, with visual icons for quick actions.*
+
+### Server View
+![Server View](docs/images/server-view.png)
+*Consolidated view of all servers showing which clients each server is configured for, with bulk management options.*
+
+### Remote MCP Setup
+![Remote MCP Modal](docs/images/remote-mcp-modal.png)
+*Simple interface for adding remote MCP servers - just provide a name and URL to automatically generate the correct configuration.*
 
 ## Installation
 
@@ -101,6 +120,13 @@ The web UI provides:
   - Full functionality on cards (edit, copy, export, delete)
   - Visual icons for quick actions
   - Drag to copy servers between clients
+- **Server View**: Consolidated view of all servers across clients
+  - Shows which clients each server is configured for
+  - Bulk operations to add servers to multiple clients
+- **Remote MCP Support**: Dedicated "Add Remote MCP" button for easy setup
+  - Simply provide server name and remote URL
+  - Automatically generates `npx mcp-remote [URL]` configuration
+  - Perfect for connecting to hosted MCP services
 - **JSON Editor**: Toggle between form and raw JSON editing
 - **Multi-select Copy**: Copy servers to multiple clients at once
 - **Clipboard Support**: Quick copy server configs with one click

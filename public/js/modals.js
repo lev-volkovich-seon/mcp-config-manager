@@ -44,7 +44,18 @@ export function showServerModal(serverName = null, serverConfig = null, loadClie
     document.getElementById('serverArgs').value = serverConfig?.args?.join('\n') || '';
 
     // Set JSON editor content
-    document.getElementById('jsonEditor').value = JSON.stringify(serverConfig || {}, null, 2);
+    if (!serverName && !serverConfig) {
+        // For new servers, show the expected format
+        document.getElementById('jsonEditor').value = JSON.stringify({
+            "new-server": {
+                "command": "npx",
+                "args": ["-y", "@example/mcp-server"],
+                "env": {}
+            }
+        }, null, 2);
+    } else {
+        document.getElementById('jsonEditor').value = JSON.stringify(serverConfig || {}, null, 2);
+    }
 
     const envVarsDiv = document.getElementById('envVars');
     envVarsDiv.innerHTML = '';
@@ -115,12 +126,30 @@ async function saveServer(originalName, loadClientServers, renderKanbanBoard, lo
 
     if (activeTab === 'json') {
         try {
-            serverConfig = JSON.parse(document.getElementById('jsonEditor').value);
-            newServerName = document.getElementById('serverName').value;
+            const jsonData = JSON.parse(document.getElementById('jsonEditor').value);
 
-            if (!newServerName) {
-                alert('Server name cannot be empty.');
-                return;
+            // Check if this is a new server (originalName is null)
+            if (!originalName) {
+                // For new servers in JSON mode, expect format: { "serverName": { config } }
+                const keys = Object.keys(jsonData);
+                if (keys.length === 0) {
+                    alert('Server configuration cannot be empty. Use format: { "serverName": { "command": "...", "args": [...] } }');
+                    return;
+                }
+                if (keys.length > 1) {
+                    alert('Only one server can be added at a time. Use format: { "serverName": { "command": "...", "args": [...] } }');
+                    return;
+                }
+                newServerName = keys[0];
+                serverConfig = jsonData[newServerName];
+            } else {
+                // For editing existing servers, use the name from the input field
+                serverConfig = jsonData;
+                newServerName = document.getElementById('serverName').value;
+                if (!newServerName) {
+                    alert('Server name cannot be empty.');
+                    return;
+                }
             }
         } catch (e) {
             alert('Invalid JSON format');
@@ -724,3 +753,70 @@ export const showCopySingleEnvVarModal = async (serverName, envKey, envValue, so
     };
 };
 
+
+export function showRemoteServerModal(loadClientServers, renderKanbanBoard, clientId = null, loadClientsFn) {
+    const modal = document.getElementById('remoteServerModal');
+
+    // Store the client ID in the modal's data attribute
+    if (clientId) {
+        currentClient = clientId;
+        modal.dataset.clientId = clientId;
+    } else if (!currentClient && modal.dataset.clientId) {
+        currentClient = modal.dataset.clientId;
+    }
+
+    // Clear the form
+    document.getElementById('remoteServerName').value = '';
+    document.getElementById('remoteServerUrl').value = '';
+
+    modal.style.display = 'flex';
+    document.getElementById('remoteServerName').focus();
+
+    const form = document.getElementById('remoteServerForm');
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+
+        const modalClient = modal.dataset.clientId || currentClient;
+        if (!modalClient) {
+            alert('No client selected. Please close this modal and select a client first.');
+            return;
+        }
+
+        const serverName = document.getElementById('remoteServerName').value.trim();
+        const serverUrl = document.getElementById('remoteServerUrl').value.trim();
+
+        if (!serverName || !serverUrl) {
+            alert('Please provide both server name and URL.');
+            return;
+        }
+
+        // Create the configuration for remote MCP server
+        const serverConfig = {
+            command: "npx",
+            args: ["mcp-remote", serverUrl]
+        };
+
+        try {
+            await addServerApi(modalClient, serverName, serverConfig);
+            modal.style.display = 'none';
+
+            // Reload the UI
+            if (loadClientServers) {
+                loadClientServers(modalClient);
+            }
+            if (renderKanbanBoard) {
+                renderKanbanBoard();
+            }
+            if (loadClientsFn) {
+                loadClientsFn();
+            }
+        } catch (error) {
+            alert('Failed to add remote MCP server: ' + error.message);
+        }
+    };
+
+    // Cancel button
+    document.getElementById('cancelRemoteServer').onclick = () => {
+        modal.style.display = 'none';
+    };
+}

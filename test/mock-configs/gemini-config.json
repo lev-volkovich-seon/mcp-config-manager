@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "slack": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-slack"],
+      "env": {
+        "SLACK_TOKEN": "xoxb-example-token"
+      }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "env": {
+        "ALLOWED_DIRS": "/home/user/projects"
+      }
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "API_KEY": "BSA_example_key"
+      }
+    },
+    "docker": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "mcp-server"]
+    }
+  }
+}

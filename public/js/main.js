@@ -2,7 +2,7 @@ import { detectClientsApi, listClientsApi } from './api.js';
 import { initClientView, renderClientList, selectClient, loadClientServers } from './clientView.js';
 import { initKanbanView, renderKanbanBoard } from './kanbanView.js';
 import { initServerView, renderAllServers } from './serverView.js';
-import { showServerModal, showImportModal, exportConfig, initModals } from './modals.js';
+import { showServerModal, showImportModal, exportConfig, initModals, showRemoteServerModal } from './modals.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     let currentClient = null;
@@ -80,6 +80,14 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         showServerModal(null, null, loadClientServers, renderKanbanBoard, currentClient, window.loadClients);
+    });
+    document.getElementById('addRemoteServerBtn').addEventListener('click', () => {
+        // For global add remote server button, we need to prompt user to select a client first
+        if (!currentClient) {
+            alert('Please select a client from the sidebar first, then use the Add Remote MCP button in the client view.');
+            return;
+        }
+        showRemoteServerModal(loadClientServers, renderKanbanBoard, currentClient, window.loadClients);
     });
     document.getElementById('exportConfigBtn').addEventListener('click', exportConfig);
     document.getElementById('importConfigBtn').addEventListener('click', () => showImportModal(loadClientServers, renderKanbanBoard, window.loadClients));

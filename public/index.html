@@ -49,6 +49,7 @@
                             </div>
                             <div class="action-buttons">
                                 <button id="addServerBtn" class="btn btn-primary">Add Server</button>
+                                <button id="addRemoteServerBtn" class="btn btn-primary">Add Remote MCP</button>
                                 <button id="exportConfigBtn" class="btn btn-secondary">Export</button>
                                 <button id="importConfigBtn" class="btn btn-secondary">Import</button>
                             </div>
@@ -226,6 +227,30 @@
                 <div class="modal-actions">
                     <button type="submit" class="btn btn-primary">Add Server</button>
                     <button type="button" id="cancelAddServerToClients" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Remote MCP Server Modal -->
+    <div id="remoteServerModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Add Remote MCP Server</h3>
+            <form id="remoteServerForm">
+                <div class="form-group">
+                    <label for="remoteServerName">Server Name:</label>
+                    <input type="text" id="remoteServerName" name="remoteServerName" placeholder="e.g., my-remote-server" required>
+                </div>
+                <div class="form-group">
+                    <label for="remoteServerUrl">Remote URL:</label>
+                    <input type="url" id="remoteServerUrl" name="remoteServerUrl" placeholder="https://example.com/mcp" required>
+                </div>
+                <div class="form-group">
+                    <small>This will create a configuration using npx mcp-remote with your specified URL.</small>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Add Remote Server</button>
+                    <button type="button" id="cancelRemoteServer" class="btn btn-secondary">Cancel</button>
                 </div>
             </form>
         </div>
