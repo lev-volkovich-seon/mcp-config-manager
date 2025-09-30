@@ -8,7 +8,7 @@ const manager = new MCPConfigManager();
 program
   .name('mcp-config-manager')
   .description('CLI to manage MCP configurations across different AI clients')
-  .version('1.0.0');
+  .version('1.0.5', '-v, --version', 'output the current version');
 
 program
   .command('list')
