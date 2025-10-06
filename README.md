@@ -63,70 +63,56 @@ npm link
 
 ```bash
 # List all clients and their status
-mcp-manager list
+mcp-config-manager list
 
 # Show servers for a specific client
-mcp-manager show claude
+mcp-config-manager show claude
 
 # Add a new server
-mcp-manager add claude my-server -c npx -a "-y" "@example/server" -e API_KEY=abc123
+mcp-config-manager add claude my-server -c npx -a "-y" "@example/server" -e API_KEY=abc123
 
 # Remove a server from one client
-mcp-manager remove claude my-server
+mcp-config-manager remove claude my-server
 
 # Remove a server from ALL clients
-mcp-manager remove all my-server
+mcp-config-manager remove all my-server
 
 # Copy server between clients
-mcp-manager copy claude my-server cursor
+mcp-config-manager copy claude my-server cursor
 
 # Copy server to ALL other clients
-mcp-manager copy claude my-server all
+mcp-config-manager copy claude my-server all
 
 # Manage environment variables
-mcp-manager env claude my-server set API_KEY new-value
-mcp-manager env claude my-server unset API_KEY
-mcp-manager env claude my-server list
+mcp-config-manager env claude my-server set API_KEY new-value
+mcp-config-manager env claude my-server unset API_KEY
+mcp-config-manager env claude my-server list
 
 # Export/Import configurations
-mcp-manager export claude config.json
-mcp-manager export claude --server my-server server-config.json
-mcp-manager import cursor config.json
+mcp-config-manager export claude config.json
+mcp-config-manager export claude --server my-server server-config.json
+mcp-config-manager import cursor config.json
 
 # Start web UI
-mcp-manager web
+mcp-config-manager web
 # or
 npm run web
 ```
 
+**Note:** `mcp-manager` also works as a shorter alias for `mcp-config-manager`.
+
 ### Web UI
 
-#### Development (when cloning repository)
+**Start the web server:**
 ```bash
+# If installed globally
+mcp-config-manager web
+
+# If running from cloned repository
 npm run web
-```
 
-#### Global Installation
-After installing globally with `npm install -g mcp-config-manager`:
-
-**Start web server in foreground:**
-```bash
-mcp-config-manager web --port 3456
-```
-
-**Start web server as background daemon:**
-```bash
-mcp-config-manager start --port 3456
-```
-
-**Check daemon status:**
-```bash
-mcp-config-manager status
-```
-
-**Stop daemon:**
-```bash
-mcp-config-manager stop
+# Custom port (default is 3456)
+PORT=3457 npm run web
 ```
 
 Then open http://localhost:3456 in your browser.
@@ -196,6 +182,36 @@ Standard MCP server configuration:
 Environment variables may contain sensitive data like API keys. The tool masks values containing "KEY" or "SECRET" in the display but stores them in plain text in config files.
 
 ## Development & Testing
+
+### Development Workflow
+
+**Complete workflow for changes:**
+```bash
+# 1. Make your changes to the code
+
+# 2. Run tests to verify everything works
+npm test
+
+# 3. Update README.md with any new features or changes
+
+# 4. Commit changes
+git add .
+git commit -m "feat: Your feature description
+
+- Detailed changes
+- Tests: 17/17 CLI ✅, 2/2 UI ✅
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+# 5. Push to repository
+git push
+
+# 6. Publish to npm (maintainers only)
+npm version patch  # or minor/major
+npm publish
+```
 
 ### Running Tests
 
