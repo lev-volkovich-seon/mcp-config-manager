@@ -149,7 +149,7 @@ This tool supports auto-detection of any client that follows the Model Context P
 
 - **Amazon Q Developer**: `~/.aws/amazonq/mcp.json`
 - **Claude Desktop**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Claude Code**: `.mcp.json` in project root
+- **Claude Code**: `~/.claude.json` (global settings and MCP servers)
 - **Cline**: `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
 - **Cursor**: `.cursor/mcp.json` (project-specific) or `~/.cursor/mcp.json` (global)
 - **Factory Bridge**: `~/Library/Application Support/Factory Bridge/mcp.json`
@@ -157,12 +157,13 @@ This tool supports auto-detection of any client that follows the Model Context P
 - **Roo Code**: `~/Library/Application Support/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/cline_mcp_settings.json`
 - **VS Code**: `.vscode/mcp.json`
 - **Windsurf**: `~/.codeium/windsurf/mcp_config.json` or `~/AppData/Roaming/WindSurf/mcp_settings.json` (Windows)
+ - **Codex**: `~/.codex/config.toml` (TOML with `[mcp_servers.<name>]` tables)
 
 *Note: Paths may vary based on your operating system. The tool will attempt to find the correct path automatically.*
 
 ## Configuration Format
 
-Standard MCP server configuration:
+Standard MCP server configuration (JSON-based clients like Claude Desktop, Claude Code, Cursor, VS Code, etc.):
 ```json
 {
   "mcpServers": {
@@ -175,6 +176,18 @@ Standard MCP server configuration:
     }
   }
 }
+```
+
+Codex uses a TOML configuration file at `~/.codex/config.toml`, where MCP servers are defined under the `[mcp_servers.<server-name>]` tables. For example:
+
+```toml
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+
+[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"
+bearer_token_env_var = "FIGMA_OAUTH_TOKEN"
 ```
 
 ## Security Note

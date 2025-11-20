@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
+import TOML from '@iarna/toml';
 
 import { CLIENTS as PROD_CLIENTS } from './clients.js';
 
@@ -223,11 +224,15 @@ export class MCPConfigManager {
     const configPath = await this.getConfigPath(client);
     let clientConfig = { servers: {} };
 
+    const clients = await this.getClients();
+    const clientInfo = clients[client];
+
     try {
       const content = await fs.readFile(configPath, 'utf-8');
-      const parsedContent = JSON.parse(content);
-      const clients = await this.getClients();
-      clientConfig = this.normalizeConfig(parsedContent, clients[client].format);
+      const parsedContent = clientInfo.format === 'codex'
+        ? TOML.parse(content)
+        : JSON.parse(content);
+      clientConfig = this.normalizeConfig(parsedContent, clientInfo.format);
     } catch (error) {
       if (error.code !== 'ENOENT') {
         throw error;
@@ -251,6 +256,9 @@ export class MCPConfigManager {
       return { servers: config.mcpServers || {} };
     } else if (format === 'mcp.servers') {
       return { servers: config.mcp?.servers || {} };
+    } else if (format === 'codex') {
+      // Codex stores MCP servers under [mcp_servers.<server-name>] tables in config.toml
+      return { servers: config.mcp_servers || {} };
     }
     return { servers: {} };
   }
@@ -266,6 +274,15 @@ export class MCPConfigManager {
           servers: normalizedConfig.servers
         }
       };
+    } else if (format === 'codex') {
+      // Preserve other Codex settings and update only the mcp_servers table
+      return {
+        ...originalConfig,
+        mcp_servers: {
+          ...(originalConfig.mcp_servers || {}),
+          ...normalizedConfig.servers
+        }
+      };
     }
     return originalConfig;
   }
@@ -278,7 +295,9 @@ export class MCPConfigManager {
     let originalConfig = {};
     try {
       const content = await fs.readFile(configPath, 'utf-8');
-      originalConfig = JSON.parse(content);
+      originalConfig = clientConfig.format === 'codex'
+        ? TOML.parse(content)
+        : JSON.parse(content);
     } catch (error) {
       // File doesn't exist, that's OK
     }
@@ -286,7 +305,12 @@ export class MCPConfigManager {
     const finalConfig = this.denormalizeConfig(config, clientConfig.format, originalConfig);
 
     await fs.mkdir(path.dirname(configPath), { recursive: true });
-    await fs.writeFile(configPath, JSON.stringify(finalConfig, null, 2));
+
+    if (clientConfig.format === 'codex') {
+      await fs.writeFile(configPath, TOML.stringify(finalConfig));
+    } else {
+      await fs.writeFile(configPath, JSON.stringify(finalConfig, null, 2));
+    }
   }
 
 

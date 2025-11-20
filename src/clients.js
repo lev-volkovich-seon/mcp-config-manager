@@ -14,9 +14,9 @@ export const CLIENTS = {
   'claude-code': {
     name: 'Claude Code',
     configPaths: {
-      darwin: '.mcp.json',
-      win32: '.mcp.json',
-      linux: '.mcp.json'
+      darwin: path.join(os.homedir(), '.claude.json'),
+      win32: path.join(os.homedir(), '.claude.json'),
+      linux: path.join(os.homedir(), '.claude.json')
     },
     format: 'mcpServers'
   },
@@ -73,6 +73,15 @@ export const CLIENTS = {
       linux: path.join(os.homedir(), '.aws/amazonq/mcp.json')
     },
     format: 'mcpServers'
+  },
+  codex: {
+    name: 'Codex',
+    configPaths: {
+      darwin: path.join(os.homedir(), '.codex/config.toml'),
+      win32: path.join(os.homedir(), '.codex/config.toml'),
+      linux: path.join(os.homedir(), '.codex/config.toml')
+    },
+    format: 'codex'
   },
   '5ire': {
     name: '5ire',
