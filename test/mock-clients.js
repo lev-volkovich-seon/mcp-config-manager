@@ -57,6 +57,15 @@ export const MOCK_CLIENTS = {
         },
         format: 'mcpServers',
     },
+    'google-antigravity': {
+        name: 'Google AntiGravity',
+        configPaths: {
+            darwin: path.join(os.tmpdir(), 'mcp-config-manager-test', 'google-antigravity.json'),
+            linux: path.join(os.tmpdir(), 'mcp-config-manager-test', 'google-antigravity.json'),
+            win32: path.join(os.tmpdir(), 'mcp-config-manager-test', 'google-antigravity.json'),
+        },
+        format: 'mcpServers',
+    },
 };
 
 export const MOCK_GLOBAL_SERVERS_PATH = path.join(os.tmpdir(), 'mcp-config-manager-test', '.mcp-global-servers.json');

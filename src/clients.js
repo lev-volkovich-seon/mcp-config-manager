@@ -118,5 +118,14 @@ export const CLIENTS = {
       linux: path.join(os.homedir(), '.config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/cline_mcp_settings.json')
     },
     format: 'mcpServers'
+  },
+  'google-antigravity': {
+    name: 'Google AntiGravity',
+    configPaths: {
+      darwin: path.join(os.homedir(), '.gemini/antigravity/mcp_config.json'),
+      win32: path.join(os.homedir(), '.gemini/antigravity/mcp_config.json'),
+      linux: path.join(os.homedir(), '.gemini/antigravity/mcp_config.json')
+    },
+    format: 'mcpServers'
   }
 };

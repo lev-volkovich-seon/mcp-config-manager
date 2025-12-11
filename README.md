@@ -151,13 +151,14 @@ This tool supports auto-detection of any client that follows the Model Context P
 - **Claude Desktop**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Claude Code**: `~/.claude.json` (global settings and MCP servers)
 - **Cline**: `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
+- **Codex**: `~/.codex/config.toml` (TOML with `[mcp_servers.<name>]` tables)
 - **Cursor**: `.cursor/mcp.json` (project-specific) or `~/.cursor/mcp.json` (global)
 - **Factory Bridge**: `~/Library/Application Support/Factory Bridge/mcp.json`
 - **Gemini**: `~/.gemini/settings.json`
+- **Google AntiGravity**: `~/.gemini/antigravity/mcp_config.json`
 - **Roo Code**: `~/Library/Application Support/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/cline_mcp_settings.json`
 - **VS Code**: `.vscode/mcp.json`
 - **Windsurf**: `~/.codeium/windsurf/mcp_config.json` or `~/AppData/Roaming/WindSurf/mcp_settings.json` (Windows)
- - **Codex**: `~/.codex/config.toml` (TOML with `[mcp_servers.<name>]` tables)
 
 *Note: Paths may vary based on your operating system. The tool will attempt to find the correct path automatically.*
 

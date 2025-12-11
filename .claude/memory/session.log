@@ -1,0 +1,13 @@
+[2025-12-11 11:21:02] [INFO] === Session Start ===
+[2025-12-11 11:21:02] [INFO] Project root: /Users/lev.volkovich/Documents/mcp-config-manager
+[2025-12-11 11:21:02] [INFO] Directories initialized successfully
+[2025-12-11 11:21:02] [INFO] Session ID: 20251211_112102
+[2025-12-11 11:21:02] [INFO] Session initialized successfully
+[2025-12-11 11:21:02] [INFO] No working plan found, creating default
+[2025-12-11 11:21:02] [INFO] Default working plan created
+[2025-12-11 11:21:02] [INFO] No previous working plan found (created new one)
+[2025-12-11 11:21:02] [INFO] No remember file found
+[2025-12-11 11:21:03] [INFO] No REMEMBER.md found (optional context file)
+[2025-12-11 11:21:03] [INFO] No previous snapshots found
+[2025-12-11 11:21:03] [INFO] No previous snapshots (auto-healing will create them at 75% token usage)
+[2025-12-11 11:21:03] [INFO] Session metrics initialized
