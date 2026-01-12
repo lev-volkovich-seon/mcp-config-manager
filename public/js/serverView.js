@@ -45,6 +45,16 @@ export async function renderAllServers() {
                 envHtml += '</div>';
             }
 
+            // Build transport info for remote servers (type/url)
+            let transportHtml = '';
+            if (serverData.config && serverData.config.type) {
+                const transportType = serverData.config.type.toUpperCase();
+                transportHtml = `<div class="detail-row"><strong>Type:</strong> <span class="transport-badge transport-${serverData.config.type}">${transportType}</span></div>`;
+                if (serverData.config.url) {
+                    transportHtml += `<div class="detail-row"><strong>URL:</strong> ${serverData.config.url}</div>`;
+                }
+            }
+
             card.innerHTML = `
                 <div class="server-header-all">
                     <span class="server-name-all">${serverName}</span>
@@ -58,6 +68,7 @@ export async function renderAllServers() {
                     </div>
                 </div>
                 <div class="server-details-all">
+                    ${transportHtml}
                     ${serverData.config && serverData.config.command ? `<div class="detail-row"><strong>Command:</strong> ${serverData.config.command}</div>` : ''}
                     ${serverData.config && serverData.config.args ? `<div class="detail-row"><strong>Args:</strong> ${serverData.config.args.join(' ')}</div>` : ''}
                     ${envHtml}

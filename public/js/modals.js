@@ -769,6 +769,12 @@ export function showRemoteServerModal(loadClientServers, renderKanbanBoard, clie
     document.getElementById('remoteServerName').value = '';
     document.getElementById('remoteServerUrl').value = '';
 
+    // Set default transport type if selector exists
+    const transportSelect = document.getElementById('remoteServerTransport');
+    if (transportSelect) {
+        transportSelect.value = 'http';
+    }
+
     modal.style.display = 'flex';
     document.getElementById('remoteServerName').focus();
 
@@ -784,16 +790,17 @@ export function showRemoteServerModal(loadClientServers, renderKanbanBoard, clie
 
         const serverName = document.getElementById('remoteServerName').value.trim();
         const serverUrl = document.getElementById('remoteServerUrl').value.trim();
+        const transportType = document.getElementById('remoteServerTransport')?.value || 'http';
 
         if (!serverName || !serverUrl) {
             alert('Please provide both server name and URL.');
             return;
         }
 
-        // Create the configuration for remote MCP server
+        // Create the configuration for remote MCP server using native type/url format
         const serverConfig = {
-            command: "npx",
-            args: ["mcp-remote", serverUrl]
+            type: transportType,
+            url: serverUrl
         };
 
         try {

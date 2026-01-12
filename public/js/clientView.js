@@ -126,6 +126,16 @@ function renderServerList(servers) {
             envHtml += '</div>';
         }
 
+        // Build transport info for remote servers (type/url)
+        let transportHtml = '';
+        if (server.type) {
+            const transportType = server.type.toUpperCase();
+            transportHtml = `<div class="detail-row"><strong>Type:</strong> <span class="transport-badge transport-${server.type}">${transportType}</span></div>`;
+            if (server.url) {
+                transportHtml += `<div class="detail-row"><strong>URL:</strong> ${server.url}</div>`;
+            }
+        }
+
         card.innerHTML = `
             <div class="server-header">
                 <input type="checkbox" class="server-checkbox" data-server="${name}">
@@ -137,6 +147,7 @@ function renderServerList(servers) {
                 </div>
             </div>
             <div class="server-details">
+                ${transportHtml}
                 ${server.command ? `<div class="detail-row"><strong>Command:</strong> ${server.command}</div>` : ''}
                 ${server.args ? `<div class="detail-row"><strong>Args:</strong> ${server.args.join(' ')}</div>` : ''}
                 ${envHtml}

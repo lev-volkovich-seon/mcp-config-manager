@@ -10,7 +10,7 @@ Simple CLI and web UI tool to manage Model Context Protocol (MCP) configurations
 - **Multi-client support**: Manage configs for a growing list of clients, including Claude, VS Code, Cursor, Windsurf, Gemini, and more. The tool can detect any client that follows the MCP specification.
 - **Simple CLI**: Command-line interface for quick operations
 - **Web UI**: Clean web interface with List and Kanban views
-- **Remote MCP Support**: Easy setup for remote MCP servers with just a name and URL
+- **Remote MCP Support**: Native HTTP and SSE transport support for remote MCP servers
 - **Kanban Board**: Drag-and-drop servers between clients
 - **JSON Editor**: Edit server configs as raw JSON or using forms
 - **Bulk Operations**: Copy servers to multiple clients at once
@@ -130,10 +130,11 @@ The web UI provides:
 - **Server View**: Consolidated view of all servers across clients
   - Shows which clients each server is configured for
   - Bulk operations to add servers to multiple clients
-- **Remote MCP Support**: Dedicated "Add Remote MCP" button for easy setup
-  - Simply provide server name and remote URL
-  - Automatically generates `npx mcp-remote [URL]` configuration
-  - Perfect for connecting to hosted MCP services
+- **Remote MCP Support**: Native transport type support for remote MCP servers
+  - Choose between HTTP (Streamable HTTP) or SSE (Server-Sent Events) transport
+  - Simply provide server name, transport type, and remote URL
+  - Generates native `type`/`url` configuration (no proxy required)
+  - Visual transport type badges (HTTP, SSE, STDIO) in server cards
 - **JSON Editor**: Toggle between form and raw JSON editing
 - **Multi-select Copy**: Copy servers to multiple clients at once
 - **Clipboard Support**: Quick copy server configs with one click
@@ -164,7 +165,8 @@ This tool supports auto-detection of any client that follows the Model Context P
 
 ## Configuration Format
 
-Standard MCP server configuration (JSON-based clients like Claude Desktop, Claude Code, Cursor, VS Code, etc.):
+### Local MCP Servers (stdio transport)
+Standard MCP server configuration for local processes (JSON-based clients like Claude Desktop, Claude Code, Cursor, VS Code, etc.):
 ```json
 {
   "mcpServers": {
@@ -174,6 +176,23 @@ Standard MCP server configuration (JSON-based clients like Claude Desktop, Claud
       "env": {
         "API_KEY": "your-key-here"
       }
+    }
+  }
+}
+```
+
+### Remote MCP Servers (HTTP/SSE transport)
+Native remote server configuration using HTTP (Streamable HTTP) or SSE (Server-Sent Events) transport:
+```json
+{
+  "mcpServers": {
+    "remote-server": {
+      "type": "http",
+      "url": "https://example.com/mcp"
+    },
+    "sse-server": {
+      "type": "sse",
+      "url": "https://example.com/sse"
     }
   }
 }

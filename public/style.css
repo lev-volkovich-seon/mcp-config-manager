@@ -638,3 +638,29 @@ header p {
     border: 1px solid #e0e0e0;
     font-family: 'Courier New', monospace;
 }
+
+/* Transport type badges for remote servers */
+.transport-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.transport-http {
+    background: #3498db;
+    color: white;
+}
+
+.transport-sse {
+    background: #9b59b6;
+    color: white;
+}
+
+.transport-stdio {
+    background: #27ae60;
+    color: white;
+}

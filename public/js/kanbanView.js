@@ -127,6 +127,11 @@ function createKanbanCard(clientId, serverName, server) {
     card.style.backgroundColor = getServerColor(serverName);
 
     let details = '';
+    // Show transport type for remote servers
+    if (server.type) {
+        details += `type: ${server.type.toUpperCase()}\n`;
+        if (server.url) details += `url: ${server.url}\n`;
+    }
     if (server.command) details += `cmd: ${server.command}\n`;
     if (server.args) details += `args: ${server.args.join(' ')}\n`;
     if (server.env) details += `env: ${Object.keys(server.env).length} var(s)`;
