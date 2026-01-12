@@ -16,6 +16,13 @@
                 <button id="kanbanViewBtn" class="view-btn">Kanban View</button>
                 <button id="serverViewBtn" class="view-btn">Server View</button>
             </div>
+            <div class="theme-switcher-container">
+                <label for="themeSwitcher" class="theme-switcher-label">Dark Mode</label>
+                <label class="theme-switcher" for="themeSwitcher">
+                    <input type="checkbox" id="themeSwitcher">
+                    <span class="slider round"></span>
+                </label>
+            </div>
         </header>
 
         <div id="listViewContainer">
@@ -71,7 +78,6 @@
                     <option value="servers-desc">Servers (High to Low)</option>
                 </select>
             </div>
-            <div class="kanban-board" id="kanbanBoard"></div>
         </div>
 
         <div id="serverViewContainer" style="display: none;">

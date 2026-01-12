@@ -1,212 +1,194 @@
 import { getClientConfigApi, copyServerApi, deleteServerApi } from './api.js';
 import { showServerModal, editServer, copyToClipboard, exportServer } from './modals.js';
 
-let clients = []; // This will be passed from main.js
-let draggedServer = null;
-let draggedFromClient = null;
-let loadClientsCallback = null; // Callback to main.js to reload all clients
-let listenersAttached = false; // Track if event listeners have been attached
+let clients = [];
+let loadClientsCallback = null;
+let listenersAttached = false;
 
 export function initKanbanView(allClients, loadClientsFn) {
     clients = allClients;
     loadClientsCallback = loadClientsFn;
     if (!listenersAttached) {
-        attachKanbanViewEventListeners();
+        attachGridEventListeners();
         listenersAttached = true;
     }
 }
 
-// Simple hash function to generate a consistent color from a string
 function getServerColor(serverName) {
     let hash = 0;
     for (let i = 0; i < serverName.length; i++) {
         hash = serverName.charCodeAt(i) + ((hash << 5) - hash);
     }
     const hue = hash % 360;
-    return `hsl(${hue}, 70%, 85%)`; // Light, saturated color
+    const isDark = document.body.classList.contains('dark-theme');
+    const lightness = isDark ? 25 : 88;
+    const saturation = isDark ? 40 : 60;
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
-export async function renderKanbanBoard() {
-    const board = document.getElementById('kanbanBoard');
-    board.innerHTML = '';
+export async function renderKanbanGrid() {
+    const container = document.getElementById('kanbanViewContainer');
+    container.innerHTML = ''; // Clear previous content
 
-    const kanbanSort = document.getElementById('kanbanSort');
-    let sortBy = localStorage.getItem('kanbanSortBy') || 'name-asc';
-    if (kanbanSort) {
-        kanbanSort.value = sortBy;
-    }
+    const grid = document.createElement('div');
+    grid.className = 'kanban-grid';
 
-    const sortedClients = [...clients].sort((a, b) => {
-        if (sortBy === 'name-asc') {
-            return a.name.localeCompare(b.name);
-        } else if (sortBy === 'name-desc') {
-            return b.name.localeCompare(a.name);
-        } else if (sortBy === 'servers-asc') {
-            return (a.serverCount || 0) - (b.serverCount || 0);
-        } else if (sortBy === 'servers-desc') {
-            return (b.serverCount || 0) - (a.serverCount || 0);
-        }
-        return 0;
-    });
-
-    for (const client of sortedClients) {
-        const column = document.createElement('div');
-        column.className = 'kanban-column';
-        column.dataset.client = client.id;
+    for (const client of clients) {
+        const clientSection = document.createElement('div');
+        clientSection.className = 'client-tile-section';
 
         const header = document.createElement('div');
-        header.className = 'kanban-header';
-        header.innerHTML = `
-            <h3>${client.name}</h3>
-            <div class="kanban-config-path">${client.configPath}</div>
-        `;
+        header.className = 'client-tile-header';
+        header.innerHTML = `<h3>${client.name}</h3>`;
+        clientSection.appendChild(header);
 
-        const serversContainer = document.createElement('div');
-        serversContainer.className = 'kanban-servers';
-        serversContainer.dataset.client = client.id;
+        const serverGrid = document.createElement('div');
+        serverGrid.className = 'server-grid';
+        serverGrid.dataset.client = client.id;
 
-        // Load servers for this client
         try {
             const config = await getClientConfigApi(client.id);
-
-            for (const [name, server] of Object.entries(config.servers || {})) {
-                const card = createKanbanCard(client.id, name, server);
-                serversContainer.appendChild(card);
+            if (config.servers && Object.keys(config.servers).length > 0) {
+                for (const [name, server] of Object.entries(config.servers)) {
+                    const tile = createServerCard(client.id, name, server);
+                    serverGrid.appendChild(tile);
+                }
+            } else {
+                serverGrid.innerHTML = '<p class="no-servers">No servers configured.</p>';
             }
         } catch (error) {
             console.error(`Failed to load servers for ${client.id}:`, error);
+            serverGrid.innerHTML = '<p class="no-servers">Error loading servers.</p>';
         }
-
-        // Add drop zone events
-        serversContainer.ondragover = (e) => {
-            e.preventDefault();
-            serversContainer.classList.add('drag-over');
-        };
-
-        serversContainer.ondragleave = () => {
-            serversContainer.classList.remove('drag-over');
-        };
-
-        serversContainer.ondrop = async (e) => {
-            e.preventDefault();
-            serversContainer.classList.remove('drag-over');
-
-            if (draggedServer && draggedFromClient && draggedFromClient !== client.id) {
-                await handleDrop(client.id);
-            }
-        };
-
-        const addBtn = document.createElement('button');
-        addBtn.className = 'btn btn-primary kanban-add-btn';
-        addBtn.textContent = 'Add Server';
-        addBtn.addEventListener('click', () => {
-            // Pass client.id as the clientId parameter to showServerModal
-            showServerModal(null, null, () => window.loadClients(), renderKanbanBoard, client.id, loadClientsCallback); // Pass client.id and renderKanbanBoard as callback
-        });
-
-        column.appendChild(header);
-        column.appendChild(serversContainer);
-        column.appendChild(addBtn);
-        board.appendChild(column);
+        
+        clientSection.appendChild(serverGrid);
+        grid.appendChild(clientSection);
     }
-
-    if (kanbanSort) {
-        kanbanSort.onchange = () => {
-            localStorage.setItem('kanbanSortBy', kanbanSort.value);
-            renderKanbanBoard();
-        };
-    }
+    container.appendChild(grid);
 }
 
-function createKanbanCard(clientId, serverName, server) {
+function createServerCard(clientId, serverName, server) {
     const card = document.createElement('div');
     card.className = 'kanban-card';
-    card.draggable = true;
     card.dataset.server = serverName;
     card.dataset.client = clientId;
     card.style.backgroundColor = getServerColor(serverName);
 
-    let details = '';
-    // Show transport type for remote servers
-    if (server.type) {
-        details += `type: ${server.type.toUpperCase()}\n`;
-        if (server.url) details += `url: ${server.url}\n`;
-    }
-    if (server.command) details += `cmd: ${server.command}\n`;
-    if (server.args) details += `args: ${server.args.join(' ')}\n`;
-    if (server.env) details += `env: ${Object.keys(server.env).length} var(s)`;
+    const isRemote = server.type && (server.type === 'http' || server.type === 'sse');
+    const transportType = isRemote ? server.type.toUpperCase() : '';
 
+    let envDetails = '';
+    if (server.env) {
+        const hiddenKeys = Object.keys(server.env).filter(key => key.toLowerCase().includes('key') || key.toLowerCase().includes('token') || key.toLowerCase().includes('secret'));
+        const visibleKeys = Object.keys(server.env).filter(key => !hiddenKeys.includes(key));
+        if(visibleKeys.length > 0) {
+            envDetails += `<strong>Env:</strong> ${visibleKeys.join(', ')}`;
+        }
+        if(hiddenKeys.length > 0) {
+            envDetails += `${visibleKeys.length > 0 ? ', ' : '<strong>Env:</strong> '}${hiddenKeys.length} hidden key(s)`;
+        }
+    }
+    
     card.innerHTML = `
         <div class="kanban-card-header">
             <span class="kanban-card-title">${serverName}</span>
             <div class="kanban-card-actions">
                 <button class="icon-btn edit-server-kanban-btn" title="Edit" data-client-id="${clientId}" data-server-name="${serverName}">✏️</button>
-                <button class="icon-btn copy-to-clipboard-kanban-btn" title="Copy to clipboard" data-client-id="${clientId}" data-server-name="${serverName}">📋</button>
-                <button class="icon-btn export-server-kanban-btn" title="Export" data-client-id="${clientId}" data-server-name="${serverName}">💾</button>
-                <button class="icon-btn delete delete-server-kanban-btn" title="Delete" data-client-id="${clientId}" data-server-name="${serverName}">🗑️</button>
+                <button class="icon-btn delete-server-kanban-btn" title="Delete" data-client-id="${clientId}" data-server-name="${serverName}">🗑️</button>
             </div>
         </div>
-        <div class="kanban-card-details">${details}</div>
+        <div class="kanban-card-details">
+            ${isRemote ? `<span class="transport-badge transport-${server.type}">${transportType}</span>` : ''}
+            ${server.command ? `<strong>Cmd:</strong> ${server.command}` : ''}
+            <div class="env-details">${envDetails}</div>
+        </div>
     `;
 
-    card.ondragstart = (e) => {
-        // Don't start drag if clicking on buttons
-        if (e.target.tagName === 'BUTTON') {
-            e.preventDefault();
-            return;
-        }
-        draggedServer = serverName;
-        draggedFromClient = clientId;
-        card.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'copy';
-    };
-
-    card.ondragend = () => {
-        card.classList.remove('dragging');
-        draggedServer = null;
-        draggedFromClient = null;
-    };
+    card.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        showContextMenu(e, clientId, serverName);
+    });
 
     return card;
 }
 
-function attachKanbanViewEventListeners() {
-    const kanbanBoard = document.getElementById('kanbanBoard');
-    kanbanBoard.addEventListener('click', (e) => {
-        if (e.target.classList.contains('edit-server-kanban-btn')) {
-            editServerKanban(e.target.dataset.clientId, e.target.dataset.serverName, e);
-        } else if (e.target.classList.contains('rename-server-kanban-btn')) {
-            renameServerKanban(e.target.dataset.clientId, e.target.dataset.serverName, e);
-        } else if (e.target.classList.contains('copy-to-clipboard-kanban-btn')) {
-            copyToClipboardKanban(e.target.dataset.clientId, e.target.dataset.serverName, e);
-        } else if (e.target.classList.contains('export-server-kanban-btn')) {
-            exportServerKanban(e.target.dataset.clientId, e.target.dataset.serverName, e);
-        } else if (e.target.classList.contains('delete-server-kanban-btn')) {
-            deleteServerKanban(e.target.dataset.clientId, e.target.dataset.serverName, e);
+function showContextMenu(event, clientId, serverName) {
+    hideContextMenu(); // Hide any existing menu
+
+    const menu = document.createElement('div');
+    menu.id = 'customContextMenu';
+    menu.className = 'custom-context-menu';
+
+    const otherClients = clients.filter(c => c.id !== clientId);
+
+    let menuContent = '<ul>';
+    if (otherClients.length > 0) {
+        menuContent += '<li><strong>Copy to:</strong></li>';
+        otherClients.forEach(client => {
+            menuContent += `<li data-action="copy" data-target-client-id="${client.id}">${client.name}</li>`;
+        });
+    } else {
+        menuContent += '<li>No other clients to copy to.</li>';
+    }
+    menuContent += '</ul>';
+
+    menu.innerHTML = menuContent;
+    document.body.appendChild(menu);
+
+    menu.style.left = `${event.pageX}px`;
+    menu.style.top = `${event.pageY}px`;
+    menu.style.display = 'block';
+
+    menu.addEventListener('click', async (e) => {
+        if (e.target.dataset.action === 'copy') {
+            const targetClientId = e.target.dataset.targetClientId;
+            await handleCopy(clientId, serverName, targetClientId);
         }
+        hideContextMenu();
     });
+
+    document.addEventListener('click', hideContextMenu, { once: true });
 }
 
-const handleDrop = async (targetClient) => {
-    if (!draggedServer || !draggedFromClient) return;
+function hideContextMenu() {
+    const menu = document.getElementById('customContextMenu');
+    if (menu) {
+        menu.remove();
+    }
+}
 
+async function handleCopy(sourceClientId, serverName, targetClientId) {
     try {
-        const response = await copyServerApi(draggedFromClient, draggedServer, targetClient, draggedServer);
-
+        const response = await copyServerApi(sourceClientId, serverName, targetClientId, serverName);
         if (response.success) {
-            await renderKanbanBoard();
+            await renderKanbanGrid();
         } else {
-            throw new Error('Failed to copy server');
+            throw new Error(response.message || 'Failed to copy server');
         }
     } catch (error) {
         alert('Failed to copy server: ' + error.message);
     }
-};
+}
 
-export const editServerKanban = (clientId, serverName, event) => {
-    event.stopPropagation();
-    editServer(serverName, renderKanbanBoard, clientId, loadClientsCallback);
-};
+function attachGridEventListeners() {
+    const container = document.getElementById('kanbanViewContainer');
+    container.addEventListener('click', (e) => {
+        const target = e.target.closest('button');
+        if (!target) return;
+
+        const serverCard = e.target.closest('.kanban-card');
+        if (!serverCard) return;
+
+        const clientId = serverCard.dataset.client;
+        const serverName = serverCard.dataset.server;
+
+        if (target.classList.contains('edit-server-kanban-btn')) {
+            editServer(serverName, renderKanbanGrid, clientId, loadClientsCallback);
+        } else if (target.classList.contains('delete-server-kanban-btn')) {
+            deleteServerKanban(clientId, serverName, e);
+        }
+    });
+}
 
 export const deleteServerKanban = async (clientId, serverName, event) => {
     event.stopPropagation();
@@ -224,19 +206,4 @@ export const deleteServerKanban = async (clientId, serverName, event) => {
     } catch (error) {
         alert('Failed to delete server: ' + error.message);
     }
-};
-
-export const exportServerKanban = (clientId, serverName, event) => {
-    event.stopPropagation();
-    exportServer(serverName, clientId);
-};
-
-export const copyToClipboardKanban = (clientId, serverName, event) => {
-    event.stopPropagation();
-    copyToClipboard(serverName, event, null, clientId);
-};
-
-export const renameServerKanban = (clientId, serverName, event) => {
-    event.stopPropagation();
-    showRenameServerModal(serverName, () => window.loadClients(), clientId); // Pass clientId
 };

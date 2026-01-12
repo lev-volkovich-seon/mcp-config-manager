@@ -95,7 +95,7 @@ function renderServerList(servers) {
     const serverList = document.getElementById('serverList');
 
     if (Object.keys(servers).length === 0) {
-        serverList.innerHTML = '<p style="color: #7f8c8d;">No servers configured</p>';
+        serverList.innerHTML = '<p class="no-servers">No servers configured</p>';
         return;
     }
 
@@ -202,7 +202,7 @@ export const copyServerFromClientView = (serverName) => {
 };
 
 export const copyToClipboardFromClientView = (serverName, event) => {
-    copyToClipboard(serverName, event);
+    copyToClipboard(serverName, event, null, currentClient);
 };
 
 export const exportServerFromClientView = (serverName) => {

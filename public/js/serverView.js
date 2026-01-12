@@ -18,7 +18,7 @@ export async function renderAllServers() {
         allServersList.innerHTML = ''; // Clear loading message
 
         if (Object.keys(allServers).length === 0) {
-            allServersList.innerHTML = '<p style="color: #7f8c8d;">No servers found across all clients.</p>';
+            allServersList.innerHTML = '<p class="no-servers">No servers found across all clients.</p>';
             return;
         }
 
@@ -57,20 +57,22 @@ export async function renderAllServers() {
 
             card.innerHTML = `
                 <div class="server-header-all">
-                    <span class="server-name-all">${serverName}</span>
-                    ${serverData.global ? '<span class="global-tag">Global</span>' : ''}
+                    <div class="server-name-row">
+                        <span class="server-name-all">${serverName}</span>
+                        ${serverData.global ? '<span class="global-tag">Global</span>' : ''}
+                    </div>
                     <div class="server-actions-all">
                         <button class="btn btn-small btn-secondary edit-server-full-btn" data-server-name="${serverName}" data-clients='${JSON.stringify(serverData.clients)}' data-server-config='${JSON.stringify(serverData.config)}'>Edit</button>
-                        <button class="btn btn-small btn-primary add-to-clients-btn" data-server-name="${serverName}" data-server-config='${JSON.stringify(serverData.config)}'>Add to More Clients</button>
-                        <button class="btn btn-small btn-secondary copy-to-clipboard-server-view-btn" data-server-name="${serverName}" data-server-config='${JSON.stringify(serverData.config)}'>📋</button>
-                        <button class="btn btn-small btn-secondary export-server-view-btn" data-server-name="${serverName}">💾</button>
-                        <button class="btn btn-small btn-danger delete-server-view-btn" data-server-name="${serverName}">Delete</button>
+                        <button class="btn btn-small btn-secondary add-to-clients-btn" data-server-name="${serverName}" data-server-config='${JSON.stringify(serverData.config)}'>Add to Clients</button>
+                        <button class="icon-btn copy-to-clipboard-server-view-btn" data-server-name="${serverName}" data-server-config='${JSON.stringify(serverData.config)}' title="Copy">📋</button>
+                        <button class="icon-btn export-server-view-btn" data-server-name="${serverName}" title="Export">💾</button>
+                        <button class="icon-btn icon-btn-danger delete-server-view-btn" data-server-name="${serverName}" title="Delete">🗑️</button>
                     </div>
                 </div>
                 <div class="server-details-all">
                     ${transportHtml}
-                    ${serverData.config && serverData.config.command ? `<div class="detail-row"><strong>Command:</strong> ${serverData.config.command}</div>` : ''}
-                    ${serverData.config && serverData.config.args ? `<div class="detail-row"><strong>Args:</strong> ${serverData.config.args.join(' ')}</div>` : ''}
+                    ${serverData.config && serverData.config.command ? `<div class="detail-row"><span class="detail-label">Command</span><span class="detail-value">${serverData.config.command}</span></div>` : ''}
+                    ${serverData.config && serverData.config.args ? `<div class="detail-row"><span class="detail-label">Args</span><span class="detail-value">${serverData.config.args.join(' ')}</span></div>` : ''}
                     ${envHtml}
                     ${clientsHtml}
                 </div>
@@ -80,7 +82,7 @@ export async function renderAllServers() {
         attachServerViewEventListeners();
     } catch (error) {
         console.error('Failed to load all servers:', error);
-        allServersList.innerHTML = '<p style="color: #e74c3c;">Error loading servers.</p>';
+        allServersList.innerHTML = '<p class="error-state">Error loading servers.</p>';
     }
 }
 

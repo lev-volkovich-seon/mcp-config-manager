@@ -1,6 +1,6 @@
 import { detectClientsApi, listClientsApi } from './api.js';
 import { initClientView, renderClientList, selectClient, loadClientServers } from './clientView.js';
-import { initKanbanView, renderKanbanBoard } from './kanbanView.js';
+import { initKanbanView, renderKanbanGrid } from './kanbanView.js';
 import { initServerView, renderAllServers } from './serverView.js';
 import { showServerModal, showImportModal, exportConfig, initModals, showRemoteServerModal } from './modals.js';
 
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
             initModals(clients, currentClient, window.loadClients);
 
             renderClientList();
-            renderKanbanBoard();
+            renderKanbanGrid();
             renderAllServers();
         } catch (error) {
             console.error('Failed to load clients:', error);
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         serverViewContainer.style.display = view === 'server' ? 'block' : 'none';
 
         if (view === 'kanban') {
-            renderKanbanBoard();
+            renderKanbanGrid();
         } else if (view === 'server') {
             renderAllServers();
         }
@@ -72,6 +72,16 @@ document.addEventListener('DOMContentLoaded', () => {
     kanbanViewBtn.addEventListener('click', () => switchView('kanban'));
     serverViewBtn.addEventListener('click', () => switchView('server'));
 
+    document.getElementById('themeSwitcher').addEventListener('click', () => {
+        document.body.classList.toggle('dark-theme');
+        localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+    });
+
+    // Apply saved theme preference on load
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-theme');
+    }
+
     document.getElementById('refreshBtn').addEventListener('click', refreshClients);
     document.getElementById('addServerBtn').addEventListener('click', () => {
         // For global add server button, we need to prompt user to select a client first
@@ -79,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Please select a client from the sidebar first, then use the Add Server button in the client view.');
             return;
         }
-        showServerModal(null, null, loadClientServers, renderKanbanBoard, currentClient, window.loadClients);
+        showServerModal(null, null, loadClientServers, renderKanbanGrid, currentClient, window.loadClients);
     });
     document.getElementById('addRemoteServerBtn').addEventListener('click', () => {
         // For global add remote server button, we need to prompt user to select a client first
@@ -87,10 +97,10 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Please select a client from the sidebar first, then use the Add Remote MCP button in the client view.');
             return;
         }
-        showRemoteServerModal(loadClientServers, renderKanbanBoard, currentClient, window.loadClients);
+        showRemoteServerModal(loadClientServers, renderKanbanGrid, currentClient, window.loadClients);
     });
     document.getElementById('exportConfigBtn').addEventListener('click', exportConfig);
-    document.getElementById('importConfigBtn').addEventListener('click', () => showImportModal(loadClientServers, renderKanbanBoard, window.loadClients));
+    document.getElementById('importConfigBtn').addEventListener('click', () => showImportModal(loadClientServers, renderKanbanGrid, window.loadClients));
 
     // Close modals when clicking outside
     document.querySelectorAll('.modal').forEach(modal => {
