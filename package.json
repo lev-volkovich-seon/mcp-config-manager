@@ -1,6 +1,6 @@
 {
   "name": "mcp-config-manager",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Simple CLI and web UI to manage MCP configs across multiple AI clients",
   "main": "src/cli.js",
   "bin": {
