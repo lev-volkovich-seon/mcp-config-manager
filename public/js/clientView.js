@@ -114,18 +114,6 @@ function renderServerList(servers) {
         card.className = 'server-card';
         card.dataset.serverName = name;
 
-        let envHtml = '';
-        if (server.env && Object.keys(server.env).length > 0) {
-            envHtml = '<div class="env-list"><strong>Environment:</strong><br>';
-            for (const [key, value] of Object.entries(server.env)) {
-                const displayValue = value.includes('KEY') || value.includes('SECRET')
-                    ? value.substring(0, 4) + '***'
-                    : value;
-                envHtml += `${key}: ${displayValue}<br>`;
-            }
-            envHtml += '</div>';
-        }
-
         // Build transport info for remote servers (type/url)
         let transportHtml = '';
         if (server.type) {
@@ -150,7 +138,6 @@ function renderServerList(servers) {
                 ${transportHtml}
                 ${server.command ? `<div class="detail-row"><strong>Command:</strong> ${server.command}</div>` : ''}
                 ${server.args ? `<div class="detail-row"><strong>Args:</strong> ${server.args.join(' ')}</div>` : ''}
-                ${envHtml}
                 <div class="detail-row"><button class="icon-btn secondary copy-to-clipboard-btn" data-server-name="${name}" title="Copy to Clipboard">📋</button></div>
             </div>
         `;

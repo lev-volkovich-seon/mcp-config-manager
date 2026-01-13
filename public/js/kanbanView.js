@@ -21,8 +21,9 @@ function getServerColor(serverName) {
     }
     const hue = hash % 360;
     const isDark = document.body.classList.contains('dark-theme');
-    const lightness = isDark ? 25 : 88;
-    const saturation = isDark ? 40 : 60;
+    // Use lighter backgrounds for better text visibility
+    const lightness = isDark ? 20 : 92;
+    const saturation = isDark ? 30 : 50;
     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 

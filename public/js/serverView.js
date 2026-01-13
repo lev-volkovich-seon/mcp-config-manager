@@ -28,9 +28,9 @@ export async function renderAllServers() {
 
             let clientsHtml = '';
             if (serverData.clients && serverData.clients.length > 0) {
-                clientsHtml = '<div class="server-clients"><strong>Clients:</strong> ';
-                clientsHtml += serverData.clients.map(c => c.name).join(', ');
-                clientsHtml += '</div>';
+                clientsHtml = '<div class="server-clients"><span class="client-badges-label">Clients:</span><div class="client-badges">';
+                clientsHtml += serverData.clients.map(c => `<span class="client-badge client-badge-${c.id}">${c.name}</span>`).join('');
+                clientsHtml += '</div></div>';
             }
 
             let envHtml = '';
